@@ -22,7 +22,7 @@ class MelFeatures:
   t2        = 0.01
   numFilts  = 40
   minfrq    = 133.0
-  maxfrq    = 6855.0
+  maxfrq    = 8000.0
   width     = 1.0
   numcep    = 13
   del_w     = 2.0 #these should be EVEN
@@ -221,24 +221,24 @@ class MelFeatures:
 
 if __name__ == "__main__":
     MelFeat = MelFeatures()
-    for i in range(10):
+    for i in range(11):
         filename = "learn_set//wylacz//"+str(i+1)+".wav"    
         print("please speak a word into the microphone")
-
+ 
     #     RecordModule.record_to_file(filename)
         print("done - result written to ", filename)
-         
-         
+          
+          
     ###########################################    
-         
+          
         rawdata = MelFeat.loadWAVfile(filename)
-        
+         
         MFCC    = MelFeat.calcMelFeatures(rawdata)
         MFCC_s  = MelFeat.calcMelVectFeatures(MFCC)
-         
-     
+          
+      
 #         MelFeat.plotSpectrogram(MFCC)
-       
+        
         pylab.plot(range(len(MFCC_s)) , MFCC_s,'b')
         pylab.xlabel("x")
         pylab.ylabel("y")

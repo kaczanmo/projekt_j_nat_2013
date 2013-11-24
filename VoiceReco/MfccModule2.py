@@ -296,11 +296,11 @@ def getCepsVect(y):
 if __name__ == '__main__':
     
 # ++++++++++++++++++++++++++++++++++++++++++++   
-  for i in range(10):
+  for i in range(11):
     print("please speak a word into the microphone")
     filename = "learn_set//wlacz//"+str(i+1)+".wav"
 #     RecordModule.record_to_file(filename)
-    print("done - result written to ", filename)
+#     print("done - result written to ", filename)
 #     filename = 'learn_set//wlacz//3.wav'
 
 # ++++++++++++++++++++++++++++++++++++++++++++

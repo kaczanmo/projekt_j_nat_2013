@@ -222,7 +222,7 @@ def preemp(input, p):
 
 if __name__ == '__main__':
     for i in range(10):
-        filename = "learn_set//scisz//"+str(i+1)+".wav"
+        filename = "learn_set//wlacz//"+str(i+1)+".wav"
         RATE = 44100.0
         t,y = PlotModule.readWav(filename, RATE)
         

@@ -17,6 +17,8 @@ import MfccModule
 import pylab
 import MfccModule2
 import Bpnn
+from mealfeat import MelFeatures
+from VoiceCommand import VoiceCommand
 
 '''
 Created on 23-10-2013
@@ -24,13 +26,12 @@ Created on 23-10-2013
 @author: Tenac
 '''
 num_ceps = 39
-num_train_speech = 10
+# num_train_speech = 11
 
-train_speech_tab = [["", 2, "WLACZ"] 
-                    ]
 
 
 ANN = False
+WYKRES = False
 
     
     
@@ -45,12 +46,12 @@ def fSimilatiry( v1, v2 ):
     E = 1.0
     ret = 0.0
     
-    for j in range(num_ceps): #Euklides
-        ret += (v1[j] - v2[j])**2
-    ret = math.sqrt(ret)   
+#     for j in range(num_ceps): #Euklides
+#         ret += (v1[j] - v2[j])**2
+#     ret = math.sqrt(ret)   
     
-#     for j in range(len(v1)): #Hamming
-#         ret += abs(v1[j] - v2[j])  
+    for j in range(len(v1)): #Hamming
+        ret += abs(v1[j] - v2[j])  
 #     print("  VAL SUM     ", ret)
     ret = 1.0/(ret+E)  
    
@@ -85,16 +86,22 @@ def getCepsVectFromData(t,y):
     ##########
     y = RecordModule.preemp(y)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
-    ceps_vect = MfccModule.getCepsVect(word_y)
+    #################
+    #ceps_vect = MelFeatures.c  MelFeat.calcMelVectFeatures(MFCC) #MfccModule.getCepsVect(word_y)
+    
+    ##################
+    MelFeat = mealfeat.MelFeatures()
+    ceps_vect    = MelFeat.calcMelFeatures(word_y)
+    ceps_vect  = MelFeat.calcMelVectFeatures(ceps_vect)
     
     print("FDFD", ceps_vect.shape)
     return ceps_vect
 
       
     
-def readTrainSpeeches(path):
-    learned_ceps = [[0]*num_train_speech for x in range(num_ceps)]
-    for i in range(num_train_speech):
+def readTrainSpeeches(path, numOfSpeech):
+    learned_ceps = [[0]*numOfSpeech for x in range(num_ceps)]
+    for i in range(numOfSpeech):
         ceps = getCepsVectFromFile(""+path+str(i+1)+'.wav')
     ##########################
         vect_of_mccf = np.zeros(num_ceps)
@@ -106,15 +113,15 @@ def readTrainSpeeches(path):
             
    
 
-def meanLearnedCeps(lr):
+def meanLearnedCeps(lr, numOfSpeech):
      vect_of_mccf = np.zeros(num_ceps)
-     for i in range(num_train_speech):
+     for i in range(numOfSpeech):
         ceps = lr[i]
         for j in range(num_ceps): 
             vect_of_mccf[j] +=  ceps[j]
 
      for j in range(num_ceps): 
-         vect_of_mccf[j] = vect_of_mccf[j] / num_train_speech   
+         vect_of_mccf[j] = vect_of_mccf[j] / numOfSpeech   
      return vect_of_mccf   
 
         
@@ -124,124 +131,109 @@ def meanLearnedCeps(lr):
 
 def nearestNeighbour(predict):
     print("nearestNeighbour")
-    nearestAlfaNeighbour(predict, 1)
+    res = nearestAlfaNeighbour(predict, 1)
+    return res
         
 def nearestAlfaNeighbour(predict, alfa):
     print("nearestAlfaNeighbour")
     
-    if alfa > num_train_speech:
-        alfa = num_train_speech
+#     if alfa > num_train_speech:
+#         alfa = num_train_speech
     
-    dists = [ [2]for x in range(num_train_speech*4)]
+    allTrainSpeech = 0
 
-    
-    for g in range(0,num_train_speech): 
-        dists[g] = [fSimilatiry(predict, learned_ceps_wlacz[g]) , [0]]
+    for i in range(len(learned_speech_tab)):
+        allTrainSpeech += learned_speech_tab[i].numOfSpeech
         
-    for g in range(0,num_train_speech): 
-        dists[g+1*num_train_speech] = [fSimilatiry(predict, learned_ceps_wylacz[g]) , [1]]
     
-    for g in range(0,num_train_speech): 
-        dists[g+2*num_train_speech] = [fSimilatiry(predict, learned_ceps_podglos[g])  , [2]]       
-    
-    for g in range(0,num_train_speech): 
-        dists[g+3*num_train_speech] = [fSimilatiry(predict, learned_ceps_scisz[g])  , [3]]    
-        
+    dists = []
+
+    for i in range(len(learned_speech_tab)):
+        for g in range(0,learned_speech_tab[i].numOfSpeech):
+            dists.append( [fSimilatiry(predict, learned_speech_tab[i].learned_ceps[g]) , [learned_speech_tab[i].uniqueId]])
+            
         
         
     dists = sorted(dists, reverse=True) 
     print(dists)
 
+    maxForCommand = np.zeros(len(learned_speech_tab))
     
-    max = 0        
-    for g in range(0,alfa): 
-        if(dists[g][1] == [0]):
-            max +=1
-    max_wlacz = max
-######################
-    max = 0        
-    for g in range(0,alfa): 
-        if(dists[g][1] == [1]):
-           max +=1
-    max_wylacz = max
-######################
-    max = 0        
-    for g in range(0,alfa): 
-        if(dists[g][1] == [2]):
-           max +=1
-    max_podglos = max 
-######################
-    max = 0        
-    for g in range(0,alfa): 
-        if(dists[g][1] == [3]):
-           max +=1
-    max_scisz= max    
-     
-     
-    max = numpy.max([max_wlacz, max_wylacz, max_podglos, max_scisz])
-     
-    print("[WLACZ:", max_wlacz,"][WYLACZ:",max_wylacz,"][PODGLOS:",max_podglos,"][SCISZ:",max_scisz,"]" )
-     
-    if max_wlacz == max :
-        print("#WLACZ ,", max)
-    elif max_wylacz == max :
-        print("#WYLACZ ,", max)   
-    elif max_podglos == max :
-        print("#PODGLOS ,", max)     
-    elif max_scisz == max :
-        print("#SCISZ ,", max)
-        
+    for i in range(len(learned_speech_tab)):
+        alfaPom = 0
+        if alfa > learned_speech_tab[i].numOfSpeech :
+            alfaPom = learned_speech_tab[i].numOfSpeech
+        else :
+            alfaPom = alfa
+        max = 0      
+        for g in range(0,int(alfaPom)):  
+            if(dists[g][1] == [learned_speech_tab[i].uniqueId]): 
+                max +=1
+        maxForCommand[i] = max/alfaPom
+    
+    ret = np.zeros(len(learned_speech_tab))
+    for i in range(len(learned_speech_tab)):  
+        ret[i] = maxForCommand[i]
+  
+    return ret
         
 
 def nearestMean(predict):
     print("nearestMean")
-    max_wlacz = fSimilatiry(predict, learned_ceps_abs_wlacz)
-    max_wylacz = fSimilatiry(predict, learned_ceps_abs_wylacz)
-    max_podglos = fSimilatiry(predict, learned_ceps_abs_podglos)
-    max_scisz = fSimilatiry(predict, learned_ceps_abs_scisz)
 
+    maxForCommand = [ []for x in range(len(learned_speech_tab))]
 
-    max = numpy.max([max_wlacz, max_wylacz, max_podglos, max_scisz])
+    for i in range(len(learned_speech_tab)):
+             maxForCommand[i] = [fSimilatiry(predict, learned_speech_tab[i].learned_ceps_abs)]
+             
+
     
-    print("[WLACZ:", max_wlacz,"][WYLACZ:",max_wylacz,"][PODGLOS:",max_podglos,"][SCISZ:",max_scisz,"]" )
-    
-    if max_wlacz == max :
-        print("#WLACZ ,", max)
-    elif max_wylacz == max :
-        print("#WYLACZ ,", max)   
-    elif max_podglos == max :
-        print("#PODGLOS ,", max)     
-    elif max_scisz == max :
-        print("#SCISZ ,", max)        
+#     print("[WLACZ:", max_wlacz,"][WYLACZ:",max_wylacz,"][PODGLOS:",max_podglos,"][SCISZ:",max_scisz,"]" )
+    ret = np.zeros(len(learned_speech_tab))
+    max = numpy.max(maxForCommand)
+    for i in range(len(learned_speech_tab)):
+        if maxForCommand[i] == max:
+#             print("#"+learned_speech_tab[i].name+" ,", max)
+            ret[i] = 1
+    return ret         
         
 def go():   
-    WYKRES = False
+
     
     print("please speak a word into the microphone")
     t, y = RecordModule.getSpeech()
     print("done")
-#     t,y = PlotModule.readWav("learn_set//wylacz//10.wav", 44100.0)
+#     t,y = PlotModule.readWav("learn_set//wlacz//10.wav", 44100.0)
     
     
     print("predict? ...")
     predict =  getCepsVectFromData(t, y)
 
-    nearestNeighbour(predict)
-    nearestMean(predict)
-    nearestAlfaNeighbour(predict, 4)
+    NNRes = nearestNeighbour(predict)
+    NMRes = nearestMean(predict)
+    NANRes = nearestAlfaNeighbour(predict, 4)
+    ALLRes = np.zeros(len(learned_speech_tab))
+    
+    for i in range(len(learned_speech_tab)):
+        ALLRes[i] = NNRes[i] + NMRes[i] + NANRes[i]
+        ALLRes[i] = ALLRes[i]/3.0*100.0
+        
+    print("RESULT:")
+    for i in range(len(learned_speech_tab)):
+        print(learned_speech_tab[i].name , "  ", int(ALLRes[i]), " %")
+    
     if ANN:
         bpnn.test( [[predict, [1,1,1,1]]])
         
     if WYKRES:  
-        pylab.subplot(111)   
-        pylab.plot(range(num_ceps), learned_ceps_abs_wlacz, 'y' )    
-        pylab.plot(range(num_ceps), learned_ceps_abs_wylacz, 'g' )  
-        pylab.plot(range(num_ceps), learned_ceps_abs_podglos, 'b' )  
-        pylab.plot(range(num_ceps), learned_ceps_abs_scisz, 'b' )  
+        pylab.subplot(111)
+        for i in range(len(learned_speech_tab)):  
+            pylab.plot(range(num_ceps), learned_speech_tab[i].learned_ceps_abs, 'r' )    
+
             
         pylab.subplot(111)
         pylab.title("porownanie") 
-        pylab.plot(range(num_ceps), predict[:num_ceps], 'r' ) 
+        pylab.plot(range(num_ceps), predict[:num_ceps], 'k' ) 
         
         pylab.show()   
             
@@ -298,42 +290,44 @@ def go2():
        
        
 def goRecord():
-    global learned_ceps_wlacz
-    global learned_ceps_wylacz
-    global learned_ceps_podglos
-    global learned_ceps_scisz
+    global learned_speech_tab 
+    learned_speech_tab = []
+    learned_speech_tab.append(VoiceCommand("WLACZ", "learn_set//wlacz//", 11, 0))
+    learned_speech_tab.append(VoiceCommand("WYLACZ", "learn_set//wylacz//", 11, 1))
+    learned_speech_tab.append(VoiceCommand("SCISZ", "learn_set//scisz//", 11, 2))
+    learned_speech_tab.append(VoiceCommand("PODGLOS", "learn_set//podglos//", 11, 3))
     
-    global learned_ceps_abs_wlacz
-    global learned_ceps_abs_wylacz
-    global learned_ceps_abs_podglos
-    global learned_ceps_abs_scisz 
+    for i in range(len(learned_speech_tab)):
+        print(learned_speech_tab[i].name)
+        learned_speech_tab[i].learned_ceps = readTrainSpeeches(learned_speech_tab[i].folderPath, learned_speech_tab[i].numOfSpeech )
+        learned_speech_tab[i].learned_ceps_abs = meanLearnedCeps(learned_speech_tab[i].learned_ceps, learned_speech_tab[i].numOfSpeech )
     
-    learned_ceps_wlacz =  readTrainSpeeches("learn_set//wlacz//")
-    learned_ceps_wylacz =  readTrainSpeeches("learn_set//wylacz//")
-    learned_ceps_podglos = readTrainSpeeches("learn_set//podglos//")
-    learned_ceps_scisz = readTrainSpeeches("learn_set//scisz//") 
+
     
-    learned_ceps_abs_wlacz =  meanLearnedCeps(learned_ceps_wlacz)
-    learned_ceps_abs_wylacz =  meanLearnedCeps(learned_ceps_wylacz)
-    learned_ceps_abs_podglos = meanLearnedCeps(learned_ceps_podglos)
-    learned_ceps_abs_scisz = meanLearnedCeps(learned_ceps_scisz)
-    
+################################
     global bpnn
     if ANN: 
+        allTrainSpeech = 0
+        for i in range(len(learned_speech_tab)):
+            allTrainSpeech += learned_speech_tab[i].numOfSpeech
+        
         bpnn = Bpnn.NN(num_ceps, 4, 4)
-        pat = [ [[0]*num_ceps,[0]*4 ]for x in range(num_train_speech*4)]
-    
-        for i in range(num_train_speech):
-            pat[i] = [learned_ceps_wlacz[i], [1,0,0,0]]
-        for i in range(num_train_speech):
-            pat[i+1*num_train_speech] = [learned_ceps_wylacz[i], [0,1,0,0]]
-        for i in range(num_train_speech):
-            pat[i+2*num_train_speech] = [learned_ceps_podglos[i], [0,0,1,0]]
-        for i in range(num_train_speech):
-            pat[i+3*num_train_speech] = [learned_ceps_scisz[i], [0,0,0,1]]
-            
+        pat = [ [[0]*num_ceps,[0]*4 ]for x in range(allTrainSpeech)]
+        
+#         for i in range(len(learned_speech_tab)):
+#              pat[i] = [learned_speech_tab[i].learned_ceps, [1,0,0,0]]
+     
+#         for i in range(num_train_speech):
+#             pat[i] = [learned_ceps_wlacz[i], [1,0,0,0]]
+#         for i in range(num_train_speech):
+#             pat[i+1*num_train_speech] = [learned_ceps_wylacz[i], [0,1,0,0]]
+#         for i in range(num_train_speech):
+#             pat[i+2*num_train_speech] = [learned_ceps_podglos[i], [0,0,1,0]]
+#         for i in range(num_train_speech):
+#             pat[i+3*num_train_speech] = [learned_ceps_scisz[i], [0,0,0,1]]
+             
         print(pat)    
-            
+             
         bpnn.train(pat)
         # test it
         bpnn.test(pat)
@@ -346,3 +340,7 @@ def goRecord():
 if __name__ == '__main__':
      print ("STARTING!")
      threading.Thread(goRecord()).start()
+     
+     
+
+     

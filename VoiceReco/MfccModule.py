@@ -16,9 +16,9 @@ import pylab
 
 
 Fs = 44100.0;  # sampling rate
-numCoefficients = 39 # choose the sive of mfcc array
-minHz = 0
-maxHz = 8000 
+numCoefficients = 16 # choose the sive of mfcc array
+minHz = 200
+maxHz = 1000 
     
 
 def trfbank(fs=16000, nfft=512, lowfreq = 133.33, linsc = 200/3. , logsc = 1.0711703,  nlinfilt = 13 , nlogfilt = 27):
@@ -113,8 +113,8 @@ def getCepsVect(signal):
     
 if __name__ == '__main__':
 
-    for i in range(10):
-        filename = "learn_set//podglos//"+str(i+1)+".wav"
+    for i in range(11):
+        filename = "learn_set//wlacz//"+str(i+1)+".wav"
     
         sampleRate, signal = PlotModule.readWav(filename, Fs)
       
@@ -125,4 +125,19 @@ if __name__ == '__main__':
         
         pylab.title(filename) 
         pylab.plot(range(numCoefficients), ceps, 'b')
+        
+    for i in range(11):
+        filename = "learn_set//wylacz//"+str(i+1)+".wav"
+    
+        sampleRate, signal = PlotModule.readWav(filename, Fs)
+      
+        
+        ceps = getCepsVect(signal)
+        
+        
+        
+        pylab.title(filename) 
+        pylab.plot(range(numCoefficients), ceps, 'r')
+        
+        
     pylab.show()

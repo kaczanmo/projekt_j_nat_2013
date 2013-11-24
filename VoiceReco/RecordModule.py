@@ -20,15 +20,15 @@ import MfccModule
 
 
 
-
+RATE = 44100
 THRESHOLD = 300  # audio levels not normalised.
 CHUNK_SIZE = 1024
-SILENT_CHUNKS = int(0.15 * 44100 / 1024)  # about x sec
-SPEECH_CHUNKS = int(0.1 * 44100 / 1024)  # about x sec
+SILENT_CHUNKS = int(0.15 * RATE / CHUNK_SIZE)  # about x sec
+SPEECH_CHUNKS = int(0.1 * RATE / CHUNK_SIZE)  # about x sec
 FORMAT = pyaudio.paInt16
 FRAME_MAX_VALUE = 2 ** 15 - 1
 NORMALIZE_MINUS_ONE_dB = 10 ** (-1.0 / 20)
-RATE = 44100
+
 CHANNELS = 1
 TRIM_APPEND = RATE / 4
 
@@ -291,7 +291,7 @@ def preemp(input, p=0.97):
     
 if __name__ == '__main__':
     print("please speak a word into the microphone")
-    filename = 'test.wav'
+    filename = '11.wav'
     record_to_file(filename)
     print("done - result written to ", filename)
     t,y = PlotModule.readWav(filename, RATE)
