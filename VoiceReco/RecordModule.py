@@ -17,6 +17,7 @@ import math
 from scipy.signal import lfilter
 import MfccModule2
 import MfccModule
+from mealfeat import MelFeatures
 
 
 
@@ -291,8 +292,9 @@ def preemp(input, p=0.97):
     
 if __name__ == '__main__':
     print("please speak a word into the microphone")
-    filename = '11.wav'
-    record_to_file(filename)
+#     filename = 'test.wav'
+    filename = "learn_set//scisz//"+str( 10 )+".wav"    
+#     record_to_file(filename)
     print("done - result written to ", filename)
     t,y = PlotModule.readWav(filename, RATE)
     
@@ -330,11 +332,20 @@ if __name__ == '__main__':
     
     
     
-    ceps = MfccModule.getCepsVect(word_y)
+#     ceps = MfccModule.getCepsVect(word_y)
+    MelFeat = MelFeatures()
+    rawdata = MelFeat.loadWAVfile(filename)
+    MFCC    = MelFeat.calcMelFeatures(word_y)
+    MFCC_s  = MelFeat.calcMelVectFeatures(MFCC)
+          
+      
+#         MelFeat.plotSpectrogram(MFCC)
+        
+    
     
     pylab.subplot(616)
-    pylab.title("ceps : ") 
-    pylab.plot(range(len(ceps)), ceps, 'g')
+    pylab.title("MFCC : ") 
+    pylab.plot(range(len(MFCC_s)) , MFCC_s,'g')
 
      
      

@@ -31,7 +31,7 @@ num_ceps = 39
 
 
 ANN = False
-WYKRES = False
+WYKRES = True
 
     
     

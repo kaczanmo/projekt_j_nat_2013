@@ -52,13 +52,13 @@ def melToFreq(mel):
 
 
 for i in range(10):
-    filename = "learn_set//wlacz//"+str(i+1)+".wav"
-    p
+    filename = "learn_set//wylacz//"+str(i+1)+".wav"
+    
 #############
     sampleRate, signal = wavfile.read(filename)
     numCoefficients = 16 # choose the sice of mfcc array
     minHz = 0
-    maxHz = 22.000
+    maxHz = 8000
     
     complexSpectrum = fft.fft(signal)
     powerSpectrum = abs(complexSpectrum) ** 2

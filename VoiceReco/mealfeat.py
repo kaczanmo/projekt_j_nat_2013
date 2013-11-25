@@ -160,8 +160,8 @@ class MelFeatures:
   def calcMelFeatures(self, data):
       x = self.preemph(data,self.a)
       
-      fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y  = RecordModule.detectSingleWord(range(len(x)), x)
-      x = word_y
+#       fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y  = RecordModule.detectSingleWord(range(len(x)), x)
+#       x = word_y
       self.fs = 44100.0
  
 #       pylab.plot(range(len(x)) , x)
@@ -206,7 +206,15 @@ class MelFeatures:
       vect_of_mccf = np.zeros(len(data))
       print(data.shape)
       for i in range(len(data)): 
-          vect_of_mccf[i] = max(data[i]) # RecordModule.arithmeticMean(data[i]) # sum(data.T[i]) #
+          
+          amplMax = max(data[i])
+          amplMin = min(data[i])
+          if amplMax > abs(amplMin) :
+              vect_of_mccf[i] = amplMax
+          else :
+              vect_of_mccf[i] = amplMin
+          
+#           vect_of_mccf[i] = max(data[i]) # RecordModule.arithmeticMean(data[i]) # sum(data.T[i]) #
       vect_of_mccf[0] = 0      
       return vect_of_mccf    
   
