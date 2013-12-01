@@ -113,31 +113,19 @@ def getCepsVect(signal):
     
 if __name__ == '__main__':
 
-    for i in range(11):
+    for i in range(10,11):
         filename = "learn_set//wlacz//"+str(i+1)+".wav"
-    
         sampleRate, signal = PlotModule.readWav(filename, Fs)
-      
-        
         ceps = getCepsVect(signal)
-        
-        
-        
         pylab.title(filename) 
         pylab.plot(range(numCoefficients), ceps, 'b')
         
-    for i in range(11):
-        filename = "learn_set//wylacz//"+str(i+1)+".wav"
-    
-        sampleRate, signal = PlotModule.readWav(filename, Fs)
-      
-        
-        ceps = getCepsVect(signal)
-        
-        
-        
-        pylab.title(filename) 
-        pylab.plot(range(numCoefficients), ceps, 'r')
+#     for i in range(11):
+#         filename = "learn_set//wylacz//"+str(i+1)+".wav"
+#         sampleRate, signal = PlotModule.readWav(filename, Fs)
+#         ceps = getCepsVect(signal)
+#         pylab.title(filename) 
+#         pylab.plot(range(numCoefficients), ceps, 'r')
         
         
     pylab.show()

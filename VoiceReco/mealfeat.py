@@ -20,13 +20,15 @@ class MelFeatures:
   a         = 0.97
   t1        = 0.025
   t2        = 0.01
-  numFilts  = 40
+  numFilts  = 15
   minfrq    = 133.0
-  maxfrq    = 8000.0
+  maxfrq    = 6000.0
   width     = 1.0
-  numcep    = 13
+  numcepBasic    = 13
+  numallceps = numcepBasic*3
   del_w     = 2.0 #these should be EVEN
   dbl_del_w = 4.0
+  numcepsBands = 10
 
   def __init__(self):
     pass
@@ -113,7 +115,7 @@ class MelFeatures:
       dct_mat[0,:] = dct_mat[0,:]/math.sqrt(2.0)
       
       C = np.dot(dct_mat,Q)
-      C = C[0:self.numcep,:]
+      C = C[0:self.numcepBasic,:]
   
       return C
 
@@ -138,7 +140,7 @@ class MelFeatures:
   
   def cmn(self,C):
       m = np.mean(C,1)
-      for i in range(0,self.numcep):
+      for i in range(0,self.numcepBasic):
           C[i,:] = C[i,:] - m[i]
   
       return C
@@ -186,7 +188,7 @@ class MelFeatures:
       P   = np.dot(wts,Xp)
       
       Q = np.log(P);
-      C = self.dct(Q,self.numcep)
+      C = self.dct(Q,self.numcepBasic)
       
       C_cmn = self.cmn(C);
       R_cmn = self.idct(C_cmn,128) #second parameter is length of iDCT 
@@ -194,33 +196,68 @@ class MelFeatures:
       d1 = self.deltas(C_cmn,self.del_w)
       d2 = self.deltas(d1,self.dbl_del_w)
       
-      C_out = np.zeros((3*self.numcep,numWindows))
+      C_out = np.zeros((3*self.numcepBasic,numWindows))
       
-      C_out[0:self.numcep,:]             = C_cmn
-      C_out[self.numcep:2*self.numcep]   = d1
-      C_out[2*self.numcep:3*self.numcep] = d2
+      C_out[0:self.numcepBasic,:]             = C_cmn
+      C_out[self.numcepBasic:2*self.numcepBasic]   = d1
+      C_out[2*self.numcepBasic:3*self.numcepBasic] = d2
+#       C_out[0,:] = 0
+#       C_out = C_out[:,0:self.numcepsBands]
       
-      return C_out
+
+#     usrednienie wartosci spektrum dla danych wspolcz. w danm przedziale czasu
+      sizeBand = int(len(C_out.T) / self.numcepsBands)
+      if(sizeBand==0):
+          sizeBand=1
+      lpBand = 0
+      C_out2 = [[0 for x in range(self.numcepsBands)] for y in range(self.numallceps)] 
+
+      if(False):
+        for i in range(self.numallceps):
+            lpBand = 0
+            for j in range(len(C_out.T)):
+                C_out2[i][lpBand] += C_out[i][j]
+                if (j%sizeBand == (sizeBand-1)):
+                    C_out2[i][lpBand] = C_out2[i][lpBand]/sizeBand
+#                   print("b:",lpBand)
+                    if(lpBand<self.numcepsBands-1):
+                        lpBand+=1
+
+      if(True):
+          for kk in range(self.numallceps):
+            for ll in range(self.numcepsBands) :
+               amplMax = max(C_out[kk][ll*sizeBand:ll*sizeBand+sizeBand])
+               amplMin = min(C_out[kk][ll*sizeBand:ll*sizeBand+sizeBand])
+               if amplMax > abs(amplMin) :
+                    C_out2[kk][ll] = amplMax
+               else :
+                    C_out2[kk][ll] = amplMin
+      
+      return C_out2
   
   def calcMelVectFeatures(self, data):
       vect_of_mccf = np.zeros(len(data))
-      print(data.shape)
+#       print(data.shape)
+#       for i in range(len(data)): 
+#           vect_of_mccf[i] =  abs(data[i][0])
+
       for i in range(len(data)): 
+        vect_of_mccf[i] =  sum(abs(data[i])) #max(data[i]) # RecordModule.arithmeticMean(data[i]) #
+#         amplMax = max(data[i])
+#         amplMin = min(data[i])
+#         if amplMax > abs(amplMin) :
+#             vect_of_mccf[i] = amplMax
+#         else :
+#             vect_of_mccf[i] = amplMin
           
-          amplMax = max(data[i])
-          amplMin = min(data[i])
-          if amplMax > abs(amplMin) :
-              vect_of_mccf[i] = amplMax
-          else :
-              vect_of_mccf[i] = amplMin
           
-#           vect_of_mccf[i] = max(data[i]) # RecordModule.arithmeticMean(data[i]) # sum(data.T[i]) #
       vect_of_mccf[0] = 0      
       return vect_of_mccf    
   
   
     
-  def plotSpectrogram(self, data):
+  def plotSpectrogram(self, data, title):
+          plt.title(title)
           plt.imshow(data, origin='lower')
           plt.show()
     
@@ -229,8 +266,8 @@ class MelFeatures:
 
 if __name__ == "__main__":
     MelFeat = MelFeatures()
-    for i in range(11):
-        filename = "learn_set//wylacz//"+str(i+1)+".wav"    
+    for i in range(10):
+        filename = "learn_set//podglos//"+str(i+1)+".wav"    
         print("please speak a word into the microphone")
  
     #     RecordModule.record_to_file(filename)
@@ -242,12 +279,12 @@ if __name__ == "__main__":
         rawdata = MelFeat.loadWAVfile(filename)
          
         MFCC    = MelFeat.calcMelFeatures(rawdata)
-        MFCC_s  = MelFeat.calcMelVectFeatures(MFCC)
+#         MFCC_s  = MelFeat.calcMelVectFeatures(MFCC)
           
       
-#         MelFeat.plotSpectrogram(MFCC)
+        MelFeat.plotSpectrogram(MFCC, str(i+1)+".wav"  )
         
-        pylab.plot(range(len(MFCC_s)) , MFCC_s,'b')
-        pylab.xlabel("x")
-        pylab.ylabel("y")
+#         pylab.plot(range(len(MFCC_s)) , MFCC_s,'b')
+#         pylab.xlabel("x")
+#         pylab.ylabel("y")
     pylab.show()

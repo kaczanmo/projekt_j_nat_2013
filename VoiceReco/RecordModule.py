@@ -131,7 +131,7 @@ def record_to_file(path):
     wave_file.writeframes(data)
     wave_file.close()
     
-def getSpeech():
+def getSpeechFromMic():
     "Records from the microphone and outputs the resulting data "
     sample_width, data = record()
     
@@ -292,14 +292,14 @@ def preemp(input, p=0.97):
     
 if __name__ == '__main__':
     print("please speak a word into the microphone")
-#     filename = 'test.wav'
-    filename = "learn_set//scisz//"+str( 10 )+".wav"    
-#     record_to_file(filename)
+#     filename = "learn_set//wylacz//"+str( 15 )+".wav"   
+    filename = 'test.wav' 
+    record_to_file(filename)
     print("done - result written to ", filename)
     t,y = PlotModule.readWav(filename, RATE)
     
     
-#     t,y = getSpeech()
+#     t,y = getSpeechFromMic()
     y = preemp(y)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = detectSingleWord(t,y)
      
@@ -335,17 +335,15 @@ if __name__ == '__main__':
 #     ceps = MfccModule.getCepsVect(word_y)
     MelFeat = MelFeatures()
     rawdata = MelFeat.loadWAVfile(filename)
-    MFCC    = MelFeat.calcMelFeatures(word_y)
-    MFCC_s  = MelFeat.calcMelVectFeatures(MFCC)
-          
+    MFCC    = MelFeat.calcMelFeatures(word_y)          
       
 #         MelFeat.plotSpectrogram(MFCC)
         
     
     
-    pylab.subplot(616)
-    pylab.title("MFCC : ") 
-    pylab.plot(range(len(MFCC_s)) , MFCC_s,'g')
+#     pylab.subplot(616)
+#     pylab.title("MFCC : ") 
+#     pylab.plot(range(len(MFCC_s)) , MFCC_s,'g')
 
      
      

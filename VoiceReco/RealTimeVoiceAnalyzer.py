@@ -19,21 +19,22 @@ import MfccModule2
 import Bpnn
 from mealfeat import MelFeatures
 from VoiceCommand import VoiceCommand
+from numpy.ma.core import arange
 
 '''
 Created on 23-10-2013
 
 @author: Tenac
 '''
-num_ceps = 39
-# num_train_speech = 11
-
-
-
-ANN = False
 WYKRES = False
+MODE = "TEST"
+# MODE =  "ACTIVE"
+#/////////////////////////////////////
 
-    
+
+
+num_ceps = 13*3
+
     
 def saveMfccMatrixToFile(filename, mfccMatrix):
     myFile = open(filename, 'w')
@@ -45,16 +46,24 @@ def saveMfccMatrixToFile(filename, mfccMatrix):
 def fSimilatiry( v1, v2 ):  
     E = 1.0
     ret = 0.0
-    
-#     for j in range(num_ceps): #Euklides
-#         ret += (v1[j] - v2[j])**2
-#     ret = math.sqrt(ret)   
-    
-    for j in range(len(v1)): #Hamming
-        ret += abs(v1[j] - v2[j])  
+   
+    param = 0
+    if(param == 0): # euklidesowa odl     
+        for j in range(len(v1)): #Euklides
+            ret += (v1[j] - v2[j])**2
+        ret = math.sqrt(ret)   
+    if (param == 1): # hamming odl     
+        for j in range(len(v1)): #Hamming
+            ret += abs(np.array(v1[j]) - np.array(v2[j]))  
 #     print("  VAL SUM     ", ret)
     ret = 1.0/(ret+E)  
    
+    return ret 
+
+def fSimilatiryMatrix( m1, m2 ):  
+    ret = 0.0
+    for j in range(10):
+        ret += fSimilatiry(m1[j], m2[j])
     return ret 
 
 def getCepsVectFromFile(filename):
@@ -92,37 +101,36 @@ def getCepsVectFromData(t,y):
     ##################
     MelFeat = mealfeat.MelFeatures()
     ceps_vect    = MelFeat.calcMelFeatures(word_y)
-    ceps_vect  = MelFeat.calcMelVectFeatures(ceps_vect)
+#     ceps_vect  = MelFeat.calcMelVectFeatures(ceps_vect)
     
-    print("FDFD", ceps_vect.shape)
+
     return ceps_vect
 
       
     
 def readTrainSpeeches(path, numOfSpeech):
-    learned_ceps = [[0]*numOfSpeech for x in range(num_ceps)]
+    learned_ceps = [[0] for x in range(numOfSpeech)]
     for i in range(numOfSpeech):
         ceps = getCepsVectFromFile(""+path+str(i+1)+'.wav')
     ##########################
-        vect_of_mccf = np.zeros(num_ceps)
-        for j in range(num_ceps): 
-            vect_of_mccf[j] =  ceps[j]
-        learned_ceps[i]= vect_of_mccf
-        
+        learned_ceps[i] = ceps
+       
     return learned_ceps   
             
    
 
 def meanLearnedCeps(lr, numOfSpeech):
-     vect_of_mccf = np.zeros(num_ceps)
-     for i in range(numOfSpeech):
-        ceps = lr[i]
-        for j in range(num_ceps): 
-            vect_of_mccf[j] +=  ceps[j]
-
-     for j in range(num_ceps): 
-         vect_of_mccf[j] = vect_of_mccf[j] / numOfSpeech   
-     return vect_of_mccf   
+     mean_of_mccf = [[0]*MelFeatures.numcepsBands for x in range(MelFeatures.numallceps)]
+     
+     for k in range(numOfSpeech):
+         for i in range(MelFeatures.numallceps):
+             for j in range(MelFeatures.numcepsBands):
+                 mean_of_mccf[i][j] += lr[k][i][j]
+                 
+     for i in range(MelFeatures.numallceps):
+        for j in range(MelFeatures.numcepsBands):
+            mean_of_mccf[i][j] = mean_of_mccf[i][j] / numOfSpeech   
+     return mean_of_mccf   
 
         
 
@@ -145,14 +153,12 @@ def nearestAlfaNeighbour(predict, alfa):
     for i in range(len(learned_speech_tab)):
         allTrainSpeech += learned_speech_tab[i].numOfSpeech
         
-    
     dists = []
-
+    
     for i in range(len(learned_speech_tab)):
         for g in range(0,learned_speech_tab[i].numOfSpeech):
-            dists.append( [fSimilatiry(predict, learned_speech_tab[i].learned_ceps[g]) , [learned_speech_tab[i].uniqueId]])
+            dists.append( [fSimilatiryMatrix(predict, learned_speech_tab[i].learned_ceps[g]) , [learned_speech_tab[i].uniqueId]])
             
-        
         
     dists = sorted(dists, reverse=True) 
     print(dists)
@@ -180,11 +186,10 @@ def nearestAlfaNeighbour(predict, alfa):
 
 def nearestMean(predict):
     print("nearestMean")
-
     maxForCommand = [ []for x in range(len(learned_speech_tab))]
 
     for i in range(len(learned_speech_tab)):
-             maxForCommand[i] = [fSimilatiry(predict, learned_speech_tab[i].learned_ceps_abs)]
+             maxForCommand[i] = [fSimilatiryMatrix(predict, learned_speech_tab[i].learned_ceps_abs)]
              
 
     
@@ -197,15 +202,7 @@ def nearestMean(predict):
             ret[i] = 1
     return ret         
         
-def go():   
-
-    
-    print("please speak a word into the microphone")
-    t, y = RecordModule.getSpeech()
-    print("done")
-#     t,y = PlotModule.readWav("learn_set//wlacz//10.wav", 44100.0)
-    
-    
+def getClasificationDecision(t, y):
     print("predict? ...")
     predict =  getCepsVectFromData(t, y)
 
@@ -215,131 +212,122 @@ def go():
     ALLRes = np.zeros(len(learned_speech_tab))
     
     for i in range(len(learned_speech_tab)):
-        ALLRes[i] = NNRes[i] + NMRes[i] + NANRes[i]
+        ALLRes[i] = NNRes[i] + NMRes[i]  + NANRes[i] ##
         ALLRes[i] = ALLRes[i]/3.0*100.0
         
     print("RESULT:")
     for i in range(len(learned_speech_tab)):
-        print(learned_speech_tab[i].name , "  ", int(ALLRes[i]), " %")
+        print(learned_speech_tab[i].name , "  ", int(ALLRes[i]), " %")  
+        
+    ai=0
+    max = -1
+    for i in range(len(learned_speech_tab)):  
+        if ALLRes[i] > max :
+            ai = i
+            max = ALLRes[i]        
+        
+    return ai    
+        
+def go():   
+    print("please speak a word into the microphone")
+    t, y = RecordModule.getSpeechFromMic()
+    print("done")
+#     t,y = PlotModule.readWav("learn_set//wylacz//9.wav", 44100.0)
     
-    if ANN:
-        bpnn.test( [[predict, [1,1,1,1]]])
-        
-    if WYKRES:  
-        pylab.subplot(111)
-        for i in range(len(learned_speech_tab)):  
-            pylab.plot(range(num_ceps), learned_speech_tab[i].learned_ceps_abs, 'r' )    
+    getClasificationDecision(t, y)
+    
 
-            
-        pylab.subplot(111)
-        pylab.title("porownanie") 
-        pylab.plot(range(num_ceps), predict[:num_ceps], 'k' ) 
-        
-        pylab.show()   
-            
-
-#   vect_of_mccf = np.zeros(len(learned_ceps))
-#     for i in range(train_speech_nr):
-#         for j in range(ceps_nr):
-#             vect_of_mccf[j] += learned_ceps[i][j]
-#     
-#     for j in range(ceps_nr): 
-#         vect_of_mccf[j] = vect_of_mccf[j]/ceps_nr  
-
-#     pylab.subplot(421)
-#     pylab.title(filename) 
-#     pylab.plot(t, y)
-#      
-#     pylab.subplot(422)
-#     PlotModule.plotSpectrum(wordsdetect*y,Fs)
-#      
-#     pylab.subplot(425)
-#     pylab.imshow(ceps.T, aspect="auto", interpolation="none")
-#     pylab.title("MFCC features")
-#     pylab.xlabel("Frame")
-#     pylab.ylabel("Dimension")
-#      
-#     pylab.subplot(426)
-#     pylab.imshow(MfccModule2.dot(MfccModule2.invD, ceps.T), aspect="auto", interpolation="none", origin="lower")
-#     pylab.title("MFCC spectrum")
-#     pylab.xlabel("Frame")
-#     pylab.ylabel("Band")
-#      
-#     pylab.subplot(427)
-#      
-#    
-#         
-#     pylab.plot(range(len(vect_of_mccf)) , vect_of_mccf)
-#     pylab.xlabel("frames")
-#     pylab.ylabel("avg")
-#      
-#     pylab.show()
 
     print("done")        
         
         
-def go2():
-     filename = "b.wav"
-     MelFeat = mealfeat.MelFeatures()
-     rawdata = MelFeat.loadWAVfile('wlacz.wav')
-     MFCC    = MelFeat.calcMelFeatures(rawdata)
-     MFCC_s  = MelFeat.calcMelSumsFeatures(MFCC)
-    
-     MelFeat.plotSpectrogram(MFCC)
-     print("done") 
+def goTest():
+ 
+    stats = []
+ 
+    print("start")
+    for i in range(len(learned_speech_tab)):
+        okey=0
+        bad=0    
+        for j in range(learned_speech_tab[i].numOfSpeech):
+            print("predict? ...")
+            predict = learned_speech_tab[i].learned_ceps[j]
+            learned_speech_tab[i].learned_ceps[j] =  [[-9999]*MelFeatures.numcepsBands for x in range(MelFeatures.numallceps)]
+#             print (learned_speech_tab[i].learned_ceps[j])
+            NNRes = nearestNeighbour(predict)
+            NMRes = nearestMean(predict)
+            NANRes = nearestAlfaNeighbour(predict, 4)
+            ALLRes = np.zeros(len(learned_speech_tab))
+            
+            for ij in range(len(learned_speech_tab)):
+                ALLRes[ij] = NNRes[ij] + NMRes[ij]  + NANRes[ij] ##
+                ALLRes[ij] = ALLRes[ij]/3.0*100.0
+                
+            print("RESULT:")
+            for ij in range(len(learned_speech_tab)):
+                print(learned_speech_tab[ij].name , "  ", int(ALLRes[ij]), " %")  
+                
+            ai=0
+            max = -1
+            for ij in range(len(learned_speech_tab)):  
+                if ALLRes[i] > max :
+                    ai = ij
+                    max = ALLRes[ij]        
+            
+            learned_speech_tab[i].learned_ceps[j] = predict
+            if learned_speech_tab[ai].name == learned_speech_tab[i].name:
+                okey+=1
+            else:
+                bad+=1
+        stats.append([learned_speech_tab[i].name,okey,bad,learned_speech_tab[i].numOfSpeech] )
+          
+              
+
+    print(stats)
+    sum_ok = 0.0
+    sum_bad = 0.0
+    for i in range(len(stats)):
+        sum_ok+=stats[i][1]     
+        sum_bad+=stats[i][2]
+
+    rate =  (sum_ok/(sum_ok+sum_bad))*100.0
+    print("skutecznosc:",(rate),"%")
+    print("done") 
        
        
 def goRecord():
     global learned_speech_tab 
     learned_speech_tab = []
-    learned_speech_tab.append(VoiceCommand("WLACZ", "learn_set//wlacz//", 11, 0))
-    learned_speech_tab.append(VoiceCommand("WYLACZ", "learn_set//wylacz//", 11, 1))
-    learned_speech_tab.append(VoiceCommand("SCISZ", "learn_set//scisz//", 11, 2))
-    learned_speech_tab.append(VoiceCommand("PODGLOS", "learn_set//podglos//", 11, 3))
+    learned_speech_tab.append(VoiceCommand("WLACZ", "learn_set//wlacz//", 15, 0))
+    learned_speech_tab.append(VoiceCommand("WYLACZ", "learn_set//wylacz//", 15, 1))
+    learned_speech_tab.append(VoiceCommand("SCISZ", "learn_set//scisz//", 10, 2))
+    learned_speech_tab.append(VoiceCommand("PODGLOS", "learn_set//podglos//", 10, 3))
+    
+   
     
     for i in range(len(learned_speech_tab)):
         print(learned_speech_tab[i].name)
-        learned_speech_tab[i].learned_ceps = readTrainSpeeches(learned_speech_tab[i].folderPath, learned_speech_tab[i].numOfSpeech )
+        (learned_speech_tab[i].learned_ceps) = readTrainSpeeches(learned_speech_tab[i].folderPath, learned_speech_tab[i].numOfSpeech )
         learned_speech_tab[i].learned_ceps_abs = meanLearnedCeps(learned_speech_tab[i].learned_ceps, learned_speech_tab[i].numOfSpeech )
     
 
     
-################################
-    global bpnn
-    if ANN: 
-        allTrainSpeech = 0
-        for i in range(len(learned_speech_tab)):
-            allTrainSpeech += learned_speech_tab[i].numOfSpeech
-        
-        bpnn = Bpnn.NN(num_ceps, 4, 4)
-        pat = [ [[0]*num_ceps,[0]*4 ]for x in range(allTrainSpeech)]
-        
-#         for i in range(len(learned_speech_tab)):
-#              pat[i] = [learned_speech_tab[i].learned_ceps, [1,0,0,0]]
-     
-#         for i in range(num_train_speech):
-#             pat[i] = [learned_ceps_wlacz[i], [1,0,0,0]]
-#         for i in range(num_train_speech):
-#             pat[i+1*num_train_speech] = [learned_ceps_wylacz[i], [0,1,0,0]]
-#         for i in range(num_train_speech):
-#             pat[i+2*num_train_speech] = [learned_ceps_podglos[i], [0,0,1,0]]
-#         for i in range(num_train_speech):
-#             pat[i+3*num_train_speech] = [learned_ceps_scisz[i], [0,0,0,1]]
-             
-        print(pat)    
-             
-        bpnn.train(pat)
-        # test it
-        bpnn.test(pat)
-    
-    while True:
-        go()
+   
+    if(MODE == "ACTIVE"):
+            while True:
+                 go()
+    elif(MODE == "TEST"):
+            goTest()    
  
 
 
 if __name__ == '__main__':
      print ("STARTING!")
-     threading.Thread(goRecord()).start()
+     if(MODE == "ACTIVE"):
+            threading.Thread(goRecord()).start()
+     elif(MODE == "TEST"):
+            goRecord()  
+    
      
      
 

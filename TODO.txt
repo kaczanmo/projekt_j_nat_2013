@@ -1,0 +1,4 @@
+PROGRAM
+- po ustalonym czasie ma siê zakoñczyæ nagrywanie dŸwiêku, tzn ¿eby nie by³o tak ¿e nagranie ma np. 10sekund
+- okreœlenie progu dla którego wypowiedziana komenda to NIEZNANA
+DOKUMENTACJA

@@ -26,16 +26,19 @@ def plotSpectrum(y,Fs):
  """
  Plots a Single-Sided Amplitude Spectrum of y(t)
  """
- maxFreq = 8000
+ maxFreq = 5000
  n = len(y) # length of the signal
  k = arange(n)
  T = n/Fs
  frq = k/T # two sides frequency range
- #frq = frq[range(n/2)] # one side frequency range
- frq = frq[:(maxFreq)]
+
+#  frq = frq[0:n/2] # one side frequency range
+ frq = frq[0:(maxFreq)]
+ print(frq.shape)
  Y = fft(y)/n # fft computing and normalization
- #Y = Y[range(n/2)]
- Y = Y[:(maxFreq)]
+#  Y = Y[0:n/2]
+ Y = Y[0:(maxFreq)]
+ 
  plot(frq,abs(Y),'r') # plotting the spectrum
  xlabel('Freq (Hz)')
  ylabel('|Y(freq)|')
@@ -52,7 +55,7 @@ def readWav(filename, Fs):
 
 if __name__ == '__main__':
     Fs = 44100.0;  # sampling rate
-    filename = "learn_set//wylacz//6.wav"
+    filename = "learn_set//wlacz//6.wav"
     t,y = readWav(filename, Fs)
     y = RecordModule.preemp(y)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
@@ -61,5 +64,6 @@ if __name__ == '__main__':
     pylab.title(filename) 
     pylab.plot(t, y)
     pylab.subplot(212)
+    print(word_y.shape)
     plotSpectrum(word_y,Fs)
     pylab.show()
