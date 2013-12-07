@@ -28,7 +28,7 @@ class MelFeatures:
   numallceps = numcepBasic*3
   del_w     = 2.0 #these should be EVEN
   dbl_del_w = 4.0
-  numcepsBands = 10
+  numcepsBands = 5 ## liczba przedzialow w spektrum
 
   def __init__(self):
     pass
@@ -267,7 +267,7 @@ class MelFeatures:
 if __name__ == "__main__":
     MelFeat = MelFeatures()
     for i in range(10):
-        filename = "learn_set//podglos//"+str(i+1)+".wav"    
+        filename = "learn_set//wylacz//"+str(i+1)+".wav"    
         print("please speak a word into the microphone")
  
     #     RecordModule.record_to_file(filename)

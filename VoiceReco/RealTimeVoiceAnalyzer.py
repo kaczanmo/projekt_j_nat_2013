@@ -29,11 +29,9 @@ Created on 23-10-2013
 WYKRES = False
 MODE = "TEST"
 # MODE =  "ACTIVE"
+prog_Komenda_nieznana = 71.0 # %
 #/////////////////////////////////////
 
-
-
-num_ceps = 13*3
 
     
 def saveMfccMatrixToFile(filename, mfccMatrix):
@@ -62,29 +60,11 @@ def fSimilatiry( v1, v2 ):
 
 def fSimilatiryMatrix( m1, m2 ):  
     ret = 0.0
-    for j in range(10):
+    for j in range(len(m1)):
         ret += fSimilatiry(m1[j], m2[j])
     return ret 
 
 def getCepsVectFromFile(filename):
-#     Fs = 44100.0;  # sampling rate
-#     t,y = PlotModule.readWav(filename, Fs)
-# ##########
-#     y = RecordModule.preemp(y)
-#     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
-#    #########################
-#     ceps, mspec, spec = MfccModule2.mfcc(word_y)
-
-
-
-
-################
-#     MelFeat = mealfeat.MelFeatures()
-#     rawdata = MelFeat.loadWAVfile(filename)
-#     MFCC    = MelFeat.calcMelFeatures(rawdata)
-#     ceps = MFCC
-#     ##########################
-
     Fs = 44100.0;  # sampling rate
     t,y = PlotModule.readWav(filename, Fs)
     ##########
@@ -95,14 +75,9 @@ def getCepsVectFromData(t,y):
     ##########
     y = RecordModule.preemp(y)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
-    #################
-    #ceps_vect = MelFeatures.c  MelFeat.calcMelVectFeatures(MFCC) #MfccModule.getCepsVect(word_y)
-    
     ##################
     MelFeat = mealfeat.MelFeatures()
     ceps_vect    = MelFeat.calcMelFeatures(word_y)
-#     ceps_vect  = MelFeat.calcMelVectFeatures(ceps_vect)
-    
 
     return ceps_vect
 
@@ -112,7 +87,6 @@ def readTrainSpeeches(path, numOfSpeech):
     learned_ceps = [[0] for x in range(numOfSpeech)]
     for i in range(numOfSpeech):
         ceps = getCepsVectFromFile(""+path+str(i+1)+'.wav')
-    ##########################
         learned_ceps[i] = ceps
        
     return learned_ceps   
@@ -202,30 +176,30 @@ def nearestMean(predict):
             ret[i] = 1
     return ret         
         
-def getClasificationDecision(t, y):
-    print("predict? ...")
-    predict =  getCepsVectFromData(t, y)
-
+def getClasificationDecision(predict):
     NNRes = nearestNeighbour(predict)
     NMRes = nearestMean(predict)
     NANRes = nearestAlfaNeighbour(predict, 4)
     ALLRes = np.zeros(len(learned_speech_tab))
     
     for i in range(len(learned_speech_tab)):
-        ALLRes[i] = NNRes[i] + NMRes[i]  + NANRes[i] ##
-        ALLRes[i] = ALLRes[i]/3.0*100.0
+        ALLRes[i] = (0.4*NNRes[i])+ (0.2*NMRes[i])  + (0.4*NANRes[i]) ##
+        ALLRes[i] = ALLRes[i]*100.0
         
     print("RESULT:")
     for i in range(len(learned_speech_tab)):
         print(learned_speech_tab[i].name , "  ", int(ALLRes[i]), " %")  
         
     ai=0
-    max = -1
+    max_val = -1
     for i in range(len(learned_speech_tab)):  
-        if ALLRes[i] > max :
+        if ALLRes[i] > max_val :
             ai = i
-            max = ALLRes[i]        
-        
+            max_val = ALLRes[i]        
+    
+    # wskazuje na poza tablice, czyli przypodzadkowanie komendy jako nieznana
+    if(max_val < prog_Komenda_nieznana):
+        ai = len(learned_speech_tab)+1
     return ai    
         
 def go():   
@@ -233,8 +207,8 @@ def go():
     t, y = RecordModule.getSpeechFromMic()
     print("done")
 #     t,y = PlotModule.readWav("learn_set//wylacz//9.wav", 44100.0)
-    
-    getClasificationDecision(t, y)
+    predict =  getCepsVectFromData(t, y)
+    getClasificationDecision(predict)
     
 
 
@@ -252,30 +226,13 @@ def goTest():
         for j in range(learned_speech_tab[i].numOfSpeech):
             print("predict? ...")
             predict = learned_speech_tab[i].learned_ceps[j]
-            learned_speech_tab[i].learned_ceps[j] =  [[-9999]*MelFeatures.numcepsBands for x in range(MelFeatures.numallceps)]
-#             print (learned_speech_tab[i].learned_ceps[j])
-            NNRes = nearestNeighbour(predict)
-            NMRes = nearestMean(predict)
-            NANRes = nearestAlfaNeighbour(predict, 4)
-            ALLRes = np.zeros(len(learned_speech_tab))
             
-            for ij in range(len(learned_speech_tab)):
-                ALLRes[ij] = NNRes[ij] + NMRes[ij]  + NANRes[ij] ##
-                ALLRes[ij] = ALLRes[ij]/3.0*100.0
-                
-            print("RESULT:")
-            for ij in range(len(learned_speech_tab)):
-                print(learned_speech_tab[ij].name , "  ", int(ALLRes[ij]), " %")  
-                
-            ai=0
-            max = -1
-            for ij in range(len(learned_speech_tab)):  
-                if ALLRes[i] > max :
-                    ai = ij
-                    max = ALLRes[ij]        
+            learned_speech_tab[i].learned_ceps[j] =   [[999 for x in range(MelFeatures.numcepsBands)] for y in range(MelFeatures.numallceps)]
+
+            ai = getClasificationDecision(predict)      
             
-            learned_speech_tab[i].learned_ceps[j] = predict
-            if learned_speech_tab[ai].name == learned_speech_tab[i].name:
+            learned_speech_tab[i].learned_ceps[j] = predict  
+            if ai != (len(learned_speech_tab)+1) and learned_speech_tab[ai].name == learned_speech_tab[i].name:
                 okey+=1
             else:
                 bad+=1
@@ -302,6 +259,10 @@ def goRecord():
     learned_speech_tab.append(VoiceCommand("WYLACZ", "learn_set//wylacz//", 15, 1))
     learned_speech_tab.append(VoiceCommand("SCISZ", "learn_set//scisz//", 10, 2))
     learned_speech_tab.append(VoiceCommand("PODGLOS", "learn_set//podglos//", 10, 3))
+    
+    # wazne
+    global noneVoiceCommand
+    noneVoiceCommand = VoiceCommand("NIEZNANA", "", 0, 99)
     
    
     
