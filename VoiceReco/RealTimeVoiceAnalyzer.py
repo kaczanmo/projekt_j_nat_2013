@@ -13,10 +13,7 @@ import mealfeat
 import numpy
 import math
 
-import MfccModule
 import pylab
-import MfccModule2
-import Bpnn
 from mealfeat import MelFeatures
 from VoiceCommand import VoiceCommand
 from numpy.ma.core import arange
@@ -183,7 +180,7 @@ def getClasificationDecision(predict):
     ALLRes = np.zeros(len(learned_speech_tab))
     
     for i in range(len(learned_speech_tab)):
-        ALLRes[i] = (0.4*NNRes[i])+ (0.2*NMRes[i])  + (0.4*NANRes[i]) ##
+        ALLRes[i] = (0.4*NNRes[i])+ (0.3*NMRes[i])  + (0.3*NANRes[i]) ## 0.4  0.3  0.3 -> 94% ## 0.4  0.2  0.4  -> 90%
         ALLRes[i] = ALLRes[i]*100.0
         
     print("RESULT:")

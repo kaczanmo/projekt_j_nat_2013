@@ -10,14 +10,12 @@ from sys import byteorder
 import copy
 import pyaudio
 import wave
-import PlotModule
 import pylab
 import numpy
 import math
 from scipy.signal import lfilter
-import MfccModule2
-import MfccModule
 from mealfeat import MelFeatures
+import PlotModule
 
 
 

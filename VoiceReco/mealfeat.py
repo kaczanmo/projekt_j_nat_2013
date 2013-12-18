@@ -7,7 +7,6 @@ from scipy.fftpack import fft
 from scipy.signal import lfilter
 import pylab
 import RecordModule
-import PlotModule
 from array import array
 
 class MelFeatures:
@@ -267,7 +266,7 @@ class MelFeatures:
 if __name__ == "__main__":
     MelFeat = MelFeatures()
     for i in range(10):
-        filename = "learn_set//wylacz//"+str(i+1)+".wav"    
+        filename = "learn_set//wlacz//"+str(i+1)+".wav"    
         print("please speak a word into the microphone")
  
     #     RecordModule.record_to_file(filename)
