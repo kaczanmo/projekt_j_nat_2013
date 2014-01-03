@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy.signal import lfilter
 import pylab
-import RecordModule
 from array import array
 
 class MelFeatures:

@@ -1,6 +1,8 @@
 PROGRAM
-- po ustalonym czasie ma siê zakoñczyæ nagrywanie dŸwiêku, tzn ¿eby nie by³o tak ¿e nagranie ma np. 10sekund
-
++ po ustalonym czasie ma siê zakoñczyæ nagrywanie dŸwiêku, tzn ¿eby nie by³o tak ¿e nagranie ma np. 2sekund
++ dodaæ nowe komendy - tak zeby by³o ich  6-8 [uruchom, wy³¹cz, œcisz, podg³oœ, nastêpny, poprzedni, wycisz, jedynka]
++ nagraæ po 20 próbek komend (czyli 20 dla ka¿dej komendy)
++ zapisywaæ macierze wspó³czynników MFCC do plików txt
 
 
 DOKUMENTACJA

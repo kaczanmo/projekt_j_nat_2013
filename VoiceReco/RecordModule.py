@@ -27,6 +27,7 @@ SPEECH_CHUNKS = int(0.1 * RATE / CHUNK_SIZE)  # about x sec
 FORMAT = pyaudio.paInt16
 FRAME_MAX_VALUE = 2 ** 15 - 1
 NORMALIZE_MINUS_ONE_dB = 10 ** (-1.0 / 20)
+MAX_LENGTH_SEC = int(2.0 * RATE / CHUNK_SIZE)  # about x sec
 
 CHANNELS = 1
 TRIM_APPEND = RATE / 4
@@ -87,6 +88,8 @@ def record():
             if not silent:
                 silent_chunks = 0
                 speech_chunks += 1
+                if speech_chunks > MAX_LENGTH_SEC :
+                    break
             
             if silent :
                 silent_chunks += 1
@@ -290,7 +293,7 @@ def preemp(input, p=0.97):
     
 if __name__ == '__main__':
     print("please speak a word into the microphone")
-#     filename = "learn_set//wylacz//"+str( 15 )+".wav"   
+#     filename = "learn_set//podglos//"+str( 1 )+".wav"   
     filename = 'test.wav' 
     record_to_file(filename)
     print("done - result written to ", filename)
@@ -335,18 +338,18 @@ if __name__ == '__main__':
     rawdata = MelFeat.loadWAVfile(filename)
     MFCC    = MelFeat.calcMelFeatures(word_y)          
       
-#         MelFeat.plotSpectrogram(MFCC)
+#     MelFeat.plotSpectrogram(MFCC)
         
     
     
 #     pylab.subplot(616)
 #     pylab.title("MFCC : ") 
-#     pylab.plot(range(len(MFCC_s)) , MFCC_s,'g')
+#     pylab.plot(range(len(MFCC)) , MFCC,'g')
 
      
      
     pylab.show()
-     
+ 
      
      
     

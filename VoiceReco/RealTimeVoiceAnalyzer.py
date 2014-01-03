@@ -26,18 +26,44 @@ Created on 23-10-2013
 WYKRES = False
 MODE = "TEST"
 # MODE =  "ACTIVE"
+RECALCULATE_CEPS_MATRIX = False # recalculate and save to file
 prog_Komenda_nieznana = 71.0 # %
 #/////////////////////////////////////
 
 
     
-def saveMfccMatrixToFile(filename, mfccMatrix):
+def writeMfccMatrixToTxtFile(filename, mfccMatrix):
     myFile = open(filename, 'w')
-    
-    for i in range(len(mfccMatrix)): 
-        myFile.write(str(sum(mfccMatrix[i]))+'\n')
+    for kk in range(len(mfccMatrix)):
+        for ll in range(len(mfccMatrix[0])) :
+              myFile.write(str(mfccMatrix[kk][ll])+'\n')
     myFile.close()
     
+def readMfccMatrixToTxtFile(filename):
+#     mfccMatrix = [[0 for x in range(5)] for y in range(39)]
+#     myFile = open(filename, 'r')
+#     for kk in range(39):
+#         for ll in range(5) :
+#              line = myFile.read().split()
+#              mfccMatrix[kk][ll] = line # (str(mfccMatrix[kk][ll])+'\n')
+#              print (mfccMatrix[kk][ll])
+#     print (mfccMatrix)         
+#     myFile.close()  
+    kk=-1
+    nr=0
+    mfccMatrix = [[0]*MelFeatures.numcepsBands for x in range(MelFeatures.numallceps)]
+    with open(filename, 'r') as f:
+        for line in f:
+            numbers_float =  line.split()
+#             if nr%MelFeatures.numallceps
+            if nr%MelFeatures.numcepsBands == 0 :
+                kk+=1
+#             print (numbers_float[0])
+            mfccMatrix[kk][nr%MelFeatures.numcepsBands] = (float(numbers_float[0]))
+            nr+=1
+            
+    return mfccMatrix
+            
 def fSimilatiry( v1, v2 ):  
     E = 1.0
     ret = 0.0
@@ -61,31 +87,37 @@ def fSimilatiryMatrix( m1, m2 ):
         ret += fSimilatiry(m1[j], m2[j])
     return ret 
 
-def getCepsVectFromFile(filename):
+def getCepsMatrixFromWavFile(filename):
     Fs = 44100.0;  # sampling rate
     t,y = PlotModule.readWav(filename, Fs)
     ##########
-    return getCepsVectFromData(t,y)
+    ceps_matrix = getCepsMatrixFromData(t,y)
+    return ceps_matrix 
 
 
-def getCepsVectFromData(t,y):
+def getCepsMatrixFromData(t,y):
     ##########
     y = RecordModule.preemp(y)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
     ##################
     MelFeat = mealfeat.MelFeatures()
-    ceps_vect    = MelFeat.calcMelFeatures(word_y)
+    ceps_matrix    = MelFeat.calcMelFeatures(word_y)
 
-    return ceps_vect
+    return ceps_matrix
 
       
     
 def readTrainSpeeches(path, numOfSpeech):
     learned_ceps = [[0] for x in range(numOfSpeech)]
+    ceps = []
     for i in range(numOfSpeech):
-        ceps = getCepsVectFromFile(""+path+str(i+1)+'.wav')
+        if RECALCULATE_CEPS_MATRIX == True :
+            ceps = getCepsMatrixFromWavFile(""+path+str(i+1)+'.wav')
+            writeMfccMatrixToTxtFile(""+path+str(i+1).rsplit( ".", 1 )[ 0 ]+'.txt', ceps)
+        else:
+            ceps = readMfccMatrixToTxtFile(""+path+str(i+1).rsplit( ".", 1 )[ 0 ]+'.txt' )
+#         print(ceps)    
         learned_ceps[i] = ceps
-       
     return learned_ceps   
             
    
@@ -176,11 +208,11 @@ def nearestMean(predict):
 def getClasificationDecision(predict):
     NNRes = nearestNeighbour(predict)
     NMRes = nearestMean(predict)
-    NANRes = nearestAlfaNeighbour(predict, 4)
+    NANRes = nearestAlfaNeighbour(predict, 20)
     ALLRes = np.zeros(len(learned_speech_tab))
     
     for i in range(len(learned_speech_tab)):
-        ALLRes[i] = (0.4*NNRes[i])+ (0.3*NMRes[i])  + (0.3*NANRes[i]) ## 0.4  0.3  0.3 -> 94% ## 0.4  0.2  0.4  -> 90%
+        ALLRes[i] = (0.2*NNRes[i])+ (0.5*NMRes[i])  + (0.3*NANRes[i]) ## 0.1  0.5  0.4 -> 84% 
         ALLRes[i] = ALLRes[i]*100.0
         
     print("RESULT:")
@@ -204,7 +236,7 @@ def go():
     t, y = RecordModule.getSpeechFromMic()
     print("done")
 #     t,y = PlotModule.readWav("learn_set//wylacz//9.wav", 44100.0)
-    predict =  getCepsVectFromData(t, y)
+    predict =  getCepsMatrixFromData(t, y)
     getClasificationDecision(predict)
     
 
@@ -224,7 +256,7 @@ def goTest():
             print("predict? ...")
             predict = learned_speech_tab[i].learned_ceps[j]
             
-            learned_speech_tab[i].learned_ceps[j] =   [[999 for x in range(MelFeatures.numcepsBands)] for y in range(MelFeatures.numallceps)]
+            learned_speech_tab[i].learned_ceps[j] =   [[99999 for x in range(MelFeatures.numcepsBands)] for y in range(MelFeatures.numallceps)]
 
             ai = getClasificationDecision(predict)      
             
@@ -245,7 +277,7 @@ def goTest():
         sum_bad+=stats[i][2]
 
     rate =  (sum_ok/(sum_ok+sum_bad))*100.0
-    print("skutecznosc:",(rate),"%")
+    print("skutecznosc: %3.2f" % (rate) , "%")
     print("done") 
        
        
@@ -253,13 +285,20 @@ def goRecord():
     global learned_speech_tab 
     learned_speech_tab = []
     learned_speech_tab.append(VoiceCommand("WLACZ", "learn_set//wlacz//", 15, 0))
-    learned_speech_tab.append(VoiceCommand("WYLACZ", "learn_set//wylacz//", 15, 1))
-    learned_speech_tab.append(VoiceCommand("SCISZ", "learn_set//scisz//", 10, 2))
-    learned_speech_tab.append(VoiceCommand("PODGLOS", "learn_set//podglos//", 10, 3))
+    learned_speech_tab.append(VoiceCommand("URUCHOM", "learn_set//uruchom//", 40, 1))
+    learned_speech_tab.append(VoiceCommand("WYLACZ", "learn_set//wylacz//", 15, 2))
+    learned_speech_tab.append(VoiceCommand("SCISZ", "learn_set//scisz//", 25, 3)) 
+    learned_speech_tab.append(VoiceCommand("PODGLOS", "learn_set//podglos//", 25, 4)) 
+    learned_speech_tab.append(VoiceCommand("NASTEPNY", "learn_set//nastepny//", 25, 5))
+    learned_speech_tab.append(VoiceCommand("POPRZEDNI", "learn_set//poprzedni//", 20, 6))
+      
+    learned_speech_tab.append(VoiceCommand("WYCISZ", "learn_set//wycisz//", 20, 7))
+    learned_speech_tab.append(VoiceCommand("JEDYNKA", "learn_set//jedynka//", 20, 8))
+    learned_speech_tab.append(VoiceCommand("DWOJKA", "learn_set//dwojka//", 25, 9))
     
     # wazne
     global noneVoiceCommand
-    noneVoiceCommand = VoiceCommand("NIEZNANA", "", 0, 99)
+    noneVoiceCommand = VoiceCommand("NIEZNANA", "", 0, 999)
     
    
     
