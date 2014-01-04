@@ -18,11 +18,8 @@ Created on 23-10-2013
 
 @author: Tenac
 '''
-WYKRES = False
-MODE = "TEST"
-# MODE =  "ACTIVE"
-RECALCULATE_CEPS_MATRIX = False # recalculate and save to file
-prog_Komenda_nieznana = 71.0 # %
+
+prog_Komenda_nieznana = 71.0 # %ponizej tego progu komenda zostaje zakwalifikowana jako nierozpoznana
 #/////////////////////////////////////
 
 
@@ -37,7 +34,7 @@ def writeMfccMatrixToTxtFile(filename, mfccMatrix):
               myFile.write(str(mfccMatrix[kk][ll])+'\n')
     myFile.close()
     
-def readMfccMatrixToTxtFile(filename):
+def readMfccMatrixFromTxtFile(filename):
     '''
     funkcja do odczyty macierzy MFCC z pliku txt
     ''' 
@@ -89,7 +86,10 @@ def fSimilatiryMatrix( m1, m2 ):
     return ret 
 
 def getCepsMatrixFromWavFile(filename):
-    
+    '''
+    funkcja wyznacza z odczytanego pliku wav (ze sciezki filename) wspolczynniki
+    MFCC a potem je zwraca
+    '''
     Fs = 44100.0;  # sampling rate
     t,y = PlotModule.readWav(filename, Fs)
     ##########
@@ -98,6 +98,11 @@ def getCepsMatrixFromWavFile(filename):
 
 
 def getCepsMatrixFromData(t,y):
+    '''
+    funkcja wyznacz wspolczynniki MFCC z danych otrzymanych jako parametry
+    t: czas podany jako tablica kolejnych wartosci
+    y: sygnal podany jako tablica wartosci
+    '''
     ##########
     y = RecordModule.preemp(y)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
@@ -110,14 +115,20 @@ def getCepsMatrixFromData(t,y):
       
     
 def readTrainSpeeches(path, numOfSpeech):
+    '''
+    funkcja do wcytania nagranych probek komend z plikow wav
+    wazne jest ze wczytuje ona kolejno probki np jak podamy parametr 'numOfSpeech'=10 
+    to musza istniec probki o nazwie 1.wav do 10.wav
+    '''
+    
     learned_ceps = [[0] for x in range(numOfSpeech)]
     ceps = []
     for i in range(numOfSpeech):
-        if RECALCULATE_CEPS_MATRIX == True :
+        if MODE == 3 :
             ceps = getCepsMatrixFromWavFile(""+path+str(i+1)+'.wav')
             writeMfccMatrixToTxtFile(""+path+str(i+1).rsplit( ".", 1 )[ 0 ]+'.txt', ceps)
         else:
-            ceps = readMfccMatrixToTxtFile(""+path+str(i+1).rsplit( ".", 1 )[ 0 ]+'.txt' )
+            ceps = readMfccMatrixFromTxtFile(""+path+str(i+1).rsplit( ".", 1 )[ 0 ]+'.txt' )
 #         print(ceps)    
         learned_ceps[i] = ceps
     return learned_ceps   
@@ -125,33 +136,37 @@ def readTrainSpeeches(path, numOfSpeech):
    
 
 def meanLearnedCeps(lr, numOfSpeech):
-     mean_of_mccf = [[0]*MelFeatures.numcepsBands for x in range(MelFeatures.numallceps)]
-     
-     for k in range(numOfSpeech):
-         for i in range(MelFeatures.numallceps):
-             for j in range(MelFeatures.numcepsBands):
-                 mean_of_mccf[i][j] += lr[k][i][j]
+    '''
+    funkcja do wyliczenia sredniej wartosci odleglosci 
+    dla macierzy MFCC dla wczytanych probek komend z plikow wav
+    '''
+    mean_of_mccf = [[0]*MelFeatures.numcepsBands for x in range(MelFeatures.numallceps)]
+    for k in range(numOfSpeech):
+        for i in range(MelFeatures.numallceps):
+            for j in range(MelFeatures.numcepsBands):
+                mean_of_mccf[i][j] += lr[k][i][j]
                  
-     for i in range(MelFeatures.numallceps):
+    for i in range(MelFeatures.numallceps):
         for j in range(MelFeatures.numcepsBands):
             mean_of_mccf[i][j] = mean_of_mccf[i][j] / numOfSpeech   
-     return mean_of_mccf   
+    return mean_of_mccf   
 
         
 
-
-
-
 def nearestNeighbour(predict):
+    '''
+    funkcja klasyfikujaca najbliaszy sasiad
+    '''
     print("nearestNeighbour")
     res = nearestAlfaNeighbour(predict, 1)
     return res
         
 def nearestAlfaNeighbour(predict, alfa):
+    '''
+     funkcja klasyfikujaca najbliaszy ALFA sasiad
+    '''
     print("nearestAlfaNeighbour")
     
-#     if alfa > num_train_speech:
-#         alfa = num_train_speech
     
     allTrainSpeech = 0
 
@@ -176,11 +191,11 @@ def nearestAlfaNeighbour(predict, alfa):
             alfaPom = learned_speech_tab[i].numOfSpeech
         else :
             alfaPom = alfa
-        max = 0      
+        maxim = 0      
         for g in range(0,int(alfaPom)):  
             if(dists[g][1] == [learned_speech_tab[i].uniqueId]): 
-                max +=1
-        maxForCommand[i] = max/alfaPom
+                maxim +=1
+        maxForCommand[i] = maxim/alfaPom
     
     ret = np.zeros(len(learned_speech_tab))
     for i in range(len(learned_speech_tab)):  
@@ -190,6 +205,9 @@ def nearestAlfaNeighbour(predict, alfa):
         
 
 def nearestMean(predict):
+    '''
+    funkcja klasyfikujaca najbliasza srednia
+    '''
     print("nearestMean")
     maxForCommand = [ []for x in range(len(learned_speech_tab))]
 
@@ -208,6 +226,10 @@ def nearestMean(predict):
     return ret         
         
 def getClasificationDecision(predict):
+    '''
+    funkcja do klasyfikacji - czyli wyznacenia decyzji procentowo do jakiej klasy przydzielic
+    probke dzwiekowa z komenda 'predict'
+    '''
     NNRes = nearestNeighbour(predict)
     NMRes = nearestMean(predict)
     NANRes = nearestAlfaNeighbour(predict, 20)
@@ -233,7 +255,10 @@ def getClasificationDecision(predict):
         ai = len(learned_speech_tab)+1
     return ai    
         
-def go():   
+def goRecognition(): 
+    '''
+    funkcja nagrywa komendem, a nastepnie klasyfikuje ja do odpowiedniej klasy
+    '''  
     print("please speak a word into the microphone")
     t, y = RecordModule.getSpeechFromMic()
     print("done")
@@ -241,13 +266,13 @@ def go():
     predict =  getCepsMatrixFromData(t, y)
     getClasificationDecision(predict)
     
-
-
     print("done")        
         
         
 def goTest():
- 
+    '''
+    funkcja do przeprowadzania testow
+    '''
     stats = []
  
     print("start")
@@ -283,7 +308,13 @@ def goTest():
     print("done") 
        
        
-def goRecord():
+def goPrepareAndRecognition():
+    '''
+    funkcja wczytuje macierze MFCC z plikow i zapisuje je jako dane nauczone
+    nastepnie 
+        albo rozpoczyna sie rozpoznawanie komend glosowych
+        albo test rozpoznawania
+    '''
     global learned_speech_tab 
     learned_speech_tab = []
     learned_speech_tab.append(VoiceCommand("WLACZ", "learn_set//wlacz//", 15, 0))
@@ -302,30 +333,46 @@ def goRecord():
     global noneVoiceCommand
     noneVoiceCommand = VoiceCommand("NIEZNANA", "", 0, 999)
     
-   
-    
     for i in range(len(learned_speech_tab)):
         print(learned_speech_tab[i].name)
         (learned_speech_tab[i].learned_ceps) = readTrainSpeeches(learned_speech_tab[i].folderPath, learned_speech_tab[i].numOfSpeech )
         learned_speech_tab[i].learned_ceps_abs = meanLearnedCeps(learned_speech_tab[i].learned_ceps, learned_speech_tab[i].numOfSpeech )
-    
 
-    
    
-    if(MODE == "ACTIVE"):
+    if(MODE == 1): # tryb z rozpoznawaniem komend
             while True:
-                 go()
-    elif(MODE == "TEST"):
+                 goRecognition()
+    elif(MODE == 2): # tryb do testowania
             goTest()    
  
 
 
 if __name__ == '__main__':
-     print ("STARTING!")
-     if(MODE == "ACTIVE"):
-            threading.Thread(goRecord()).start()
-     elif(MODE == "TEST"):
-            goRecord()  
+    print ("STARTING!\n")
+    print ("Menu")
+    print ("1: Wlasciwe rozpoznawanie komend")
+    print ("2: Test systemu ze wszystkimi nagraniami")
+    print ("3: Przliczenie i zapisanie wspolczynnikow MFCC do plikow txt")
+    
+    nb = input('Wybierz opcje:\n')
+    global MODE
+    MODE = -1
+    try:
+        MODE = int( nb )
+    except:
+        print( "zly wybor !!!" )
+    print( "Wybrano : {0}\n".format( MODE ) )
+    
+    
+    if(MODE == 1):
+        threading.Thread(goPrepareAndRecognition()).start()
+    elif(MODE == 2):
+        goPrepareAndRecognition()  
+    elif(MODE == 3): # to samo co wyzej tylko bez zapetlania funkcji w while
+        goPrepareAndRecognition()
+        
+
+
     
      
      
