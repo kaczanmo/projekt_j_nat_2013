@@ -7,16 +7,11 @@ import PlotModule
 import RecordModule
 import threading
 import numpy as np
-
 import mealfeat
-
 import numpy
 import math
-
-import pylab
 from mealfeat import MelFeatures
 from VoiceCommand import VoiceCommand
-from numpy.ma.core import arange
 
 '''
 Created on 23-10-2013
@@ -33,6 +28,9 @@ prog_Komenda_nieznana = 71.0 # %
 
     
 def writeMfccMatrixToTxtFile(filename, mfccMatrix):
+    '''
+    funkcja do zapisu macierzy ze wspolczynnikami MFCC do pliku txt
+    '''
     myFile = open(filename, 'w')
     for kk in range(len(mfccMatrix)):
         for ll in range(len(mfccMatrix[0])) :
@@ -40,15 +38,9 @@ def writeMfccMatrixToTxtFile(filename, mfccMatrix):
     myFile.close()
     
 def readMfccMatrixToTxtFile(filename):
-#     mfccMatrix = [[0 for x in range(5)] for y in range(39)]
-#     myFile = open(filename, 'r')
-#     for kk in range(39):
-#         for ll in range(5) :
-#              line = myFile.read().split()
-#              mfccMatrix[kk][ll] = line # (str(mfccMatrix[kk][ll])+'\n')
-#              print (mfccMatrix[kk][ll])
-#     print (mfccMatrix)         
-#     myFile.close()  
+    '''
+    funkcja do odczyty macierzy MFCC z pliku txt
+    ''' 
     kk=-1
     nr=0
     mfccMatrix = [[0]*MelFeatures.numcepsBands for x in range(MelFeatures.numallceps)]
@@ -64,11 +56,16 @@ def readMfccMatrixToTxtFile(filename):
             
     return mfccMatrix
             
-def fSimilatiry( v1, v2 ):  
+def fSimilatiry( v1, v2 ): 
+    '''
+    wyznaczenie odleglosci miedzy dwama wektorami
+    porownanie dwoch wektorow MFCC ze soba, mozliwe sa dwie metody 
+    mierzenia odleglosci miedzy wektorami : Euklidesowa i Hamminga
+    ''' 
     E = 1.0
     ret = 0.0
    
-    param = 0
+    param = 0 
     if(param == 0): # euklidesowa odl     
         for j in range(len(v1)): #Euklides
             ret += (v1[j] - v2[j])**2
@@ -82,12 +79,17 @@ def fSimilatiry( v1, v2 ):
     return ret 
 
 def fSimilatiryMatrix( m1, m2 ):  
+    '''
+    porownanie dwoch macierzy MFCC ze soba - czyli 
+    wyznaczenie odleglosci miedzy nimi
+    ''' 
     ret = 0.0
     for j in range(len(m1)):
         ret += fSimilatiry(m1[j], m2[j])
     return ret 
 
 def getCepsMatrixFromWavFile(filename):
+    
     Fs = 44100.0;  # sampling rate
     t,y = PlotModule.readWav(filename, Fs)
     ##########

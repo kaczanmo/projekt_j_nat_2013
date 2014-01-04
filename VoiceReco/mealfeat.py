@@ -1,7 +1,6 @@
 import scipy.io.wavfile
-import scipy.io as sio
 import numpy as np
-import math, cmath
+import math
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy.signal import lfilter
@@ -266,10 +265,9 @@ if __name__ == "__main__":
     MelFeat = MelFeatures()
     for i in range(10):
         filename = "learn_set//wlacz//"+str(i+1)+".wav"    
-        print("please speak a word into the microphone")
  
     #     RecordModule.record_to_file(filename)
-        print("done - result written to ", filename)
+        print("done - read file : ", filename)
           
           
     ###########################################    

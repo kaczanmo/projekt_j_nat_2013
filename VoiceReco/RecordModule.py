@@ -47,6 +47,7 @@ def normalize(data_all):
         r.append(int(i * normalize_factor))
     return r
 
+
 def trim(data_all):
     _from = 0
     _to = len(data_all) - 1
