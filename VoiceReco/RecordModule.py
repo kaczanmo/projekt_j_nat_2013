@@ -13,9 +13,10 @@ import wave
 import pylab
 import numpy
 import math
-from scipy.signal import lfilter
+
 from mealfeat import MelFeatures
 import PlotModule
+from scipy.signal.signaltools import lfilter
 
 
 
@@ -170,7 +171,7 @@ def detectSingleWord(t,y):
     
     
     for i in range(frames):
-        wordspower[i] = (sum(abs( y[i*framesamples+1:(i+1)*framesamples])**2 ) )
+        wordspower[i] = (sum(abs( y[i*framesamples+1:(i+1)*framesamples])     ) )
        
     fr = range(frames)
 
@@ -186,8 +187,8 @@ def detectSingleWord(t,y):
         wordszeros[i] = 0.5 * sum(abs(numpy.subtract(ysigned[(i*framesamples)+1:(i+1)*framesamples] , ysigned[(i*framesamples):(i+1)*framesamples-1])))   #sum(abs(y[i*frames:(i+1)*frames]))
 #         print(i , " p p 0 : ",wordszeros[i])
         
-    IMN = arithmeticMean(wordspower[0:int(100/framelen)])
-    IMX = max(wordspower[0:int(100/framelen)]) 
+    IMN = arithmeticMean(wordspower[0:int(100/framelen)]) #int(100/framelen)
+    IMX = max(wordspower[0:int(100/framelen)])  #
     I1 = 0.03*(IMX - IMN) + IMN
     I2 = 4 * IMN 
     ITL = min(I1, I2)
@@ -212,7 +213,7 @@ def detectSingleWord(t,y):
 #     print("IZCT", IZCT )
     
     
-    # -- >>>
+    # -- >>> od 0 do wordstart
     for m in range(0,frames,1):
         if(wordstart > 0): 
             break
@@ -231,16 +232,15 @@ def detectSingleWord(t,y):
   
                        
                             
-#     #IZCT    <<< ---
-    hi = 0
-    for i in range(1, wordstart, -1):
+#     #IZCT    <<< --- cofniecie przed wordstart
+    hi = wordstart
+    for i in range(wordstart, 2, -1):
 #         print ("?IZCT : ",i, "  ",  wordszeros[i] , "  " , IZCT, "  ", (framelen*(i - wordstart)))
-        if(hi < wordstart and wordszeros[i] >= IZCT ):   
+        if(wordszeros[i] >= IZCT ):   
             hi  = i
-        if(hi>= wordstart and wordszeros[hi-1]<IZCT and (150>(i - wordstart)*framelen)) :       
+        if(hi< wordstart and wordszeros[hi-1]>=IZCT ) :
             wordstart = hi-1
             break    
-   
 
 #     IMN = arithmeticMean(wordspower[frames-(int(100/framelen)):frames])
 #     IMX = max(wordspower[frames-(int(100/framelen)):frames]) 
@@ -249,8 +249,8 @@ def detectSingleWord(t,y):
 #     ITL = min(I1, I2)
 #     ITU = 5*ITL
 
-    # <<< ---
-    for m in range(frames-1,0,-1):
+    # <<< --- od konca do wordstop
+    for m in range(frames-2,0,-1):
             if(wordstop > 0): 
                 break
 #             print ("? : ",m, "  ",  wordspower[m] , "  ITL:", ITL )
@@ -268,16 +268,15 @@ def detectSingleWord(t,y):
 
 
 
-    #IZCT    --->>>
-    hi = 0
-    for i in range(wordstop, frames-1, 1):
+    #IZCT    --->>> dalej za wordstop
+    hi = wordstop
+    for i in range(wordstop, frames-2, 1):
 #         print ("?IZCT : ",i, "  ",  wordszeros[i] , "  " , IZCT, "  ", (framelen*(i - wordstop)))
-        if(hi < wordstop and wordszeros[i] >= IZCT ):   
+        if(wordszeros[i] >= IZCT ):   
             hi  = i
-        if(hi>= wordstop and wordszeros[hi+1]<IZCT and (150>(i - wordstop)*framelen)) :       
+        if(hi> wordstop and wordszeros[hi+1]>=IZCT ) :       #and (150>(i - wordstop)*framelen)
             wordstop = hi+1
-            break      
-        
+            break        
         
     if(wordstart >= wordstop or (wordstop-wordstart)*framelen < 50 ):
         wordstart = 0
@@ -292,6 +291,7 @@ def detectSingleWord(t,y):
     word_y = y*wordsdetect
     word_y = word_y[wordstart*(framesamples) : wordstop*(framesamples)]
         
+    print('ITL:',ITL, 'ITU:',ITU)      
     return fr, wordspower, wordszeros, wordsdetect, ITL, ITU,  word_fr, word_y
     
 def preemp(input, p=0.97):
@@ -300,10 +300,10 @@ def preemp(input, p=0.97):
     
 if __name__ == '__main__':
     print("please speak a word into the microphone")
-#     filename = "learn_set//podglos//"+str( 1 )+".wav"   
-    filename = 'test.wav' 
-    record_to_file(filename)
-    print("done - result written to ", filename)
+    filename = "learn_set//podglos//"+str( 9 )+".wav"   
+#     filename = 'test.wav' 
+#     record_to_file(filename)
+#     print("done - result written to ", filename)
     t,y = PlotModule.readWav(filename, RATE)
     
     
@@ -343,7 +343,7 @@ if __name__ == '__main__':
 #     ceps = MfccModule.getCepsVect(word_y)
     MelFeat = MelFeatures()
     rawdata = MelFeat.loadWAVfile(filename)
-    MFCC    = MelFeat.calcMelFeatures(word_y)          
+    MFCC    = MelFeat.calcMelMatrixFeatures(word_y)          
       
 #     MelFeat.plotSpectrogram(MFCC)
         
