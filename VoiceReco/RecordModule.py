@@ -291,7 +291,7 @@ def detectSingleWord(t,y):
     word_y = y*wordsdetect
     word_y = word_y[wordstart*(framesamples) : wordstop*(framesamples)]
         
-    print('ITL:',ITL, 'ITU:',ITU)      
+#     print('ITL:',ITL, 'ITU:',ITU)      
     return fr, wordspower, wordszeros, wordsdetect, ITL, ITU,  word_fr, word_y
     
 def preemp(input, p=0.97):

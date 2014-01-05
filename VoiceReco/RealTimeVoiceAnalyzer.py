@@ -12,6 +12,7 @@ import numpy
 import math
 from mealfeat import MelFeatures
 from VoiceCommand import VoiceCommand
+from Rs232Com import SendCommandToSerialPort
 
 '''
 Created on 23-10-2013
@@ -124,7 +125,7 @@ def readTrainSpeeches(path, numOfSpeech):
     learned_ceps = [[0] for x in range(numOfSpeech)]
     ceps = []
     for i in range(numOfSpeech):
-        if MODE == 3 :
+        if MODE == 9 :
             ceps = getCepsMatrixFromWavFile(""+path+str(i+1)+'.wav')
             writeMfccMatrixToTxtFile(""+path+str(i+1).rsplit( ".", 1 )[ 0 ]+'.txt', ceps)
         else:
@@ -252,8 +253,13 @@ def getClasificationDecision(predict):
     
     # wskazuje na poza tablice, czyli przypodzadkowanie komendy jako nieznana
     if(max_val < prog_Komenda_nieznana):
-        ai = len(learned_speech_tab)+1
-    return ai    
+        retClass = noneVoiceCommand
+    else:
+        retClass = learned_speech_tab[ai]
+
+    print('##',retClass.name)
+
+    return retClass    
         
 def goRecognition(): 
     '''
@@ -264,7 +270,10 @@ def goRecognition():
     print("done")
 #     t,y = PlotModule.readWav("learn_set//wylacz//9.wav", 44100.0)
     predict =  getCepsMatrixFromData(t, y)
-    getClasificationDecision(predict)
+    predClass = getClasificationDecision(predict)
+    
+    if(MODE == 1):
+        SendCommandToSerialPort(predClass.name)
     
     print("done")        
         
@@ -285,10 +294,10 @@ def goTest():
             
             learned_speech_tab[i].learned_ceps[j] =   [[99999 for x in range(MelFeatures.numcepsBands)] for y in range(MelFeatures.numallceps)]
 
-            ai = getClasificationDecision(predict)      
+            retClass = getClasificationDecision(predict)     
             
             learned_speech_tab[i].learned_ceps[j] = predict  
-            if ai != (len(learned_speech_tab)+1) and learned_speech_tab[ai].name == learned_speech_tab[i].name:
+            if retClass.name == learned_speech_tab[i].name:
                 okey+=1
             else:
                 bad+=1
@@ -324,7 +333,7 @@ def goPrepareAndRecognition():
     learned_speech_tab.append(VoiceCommand("PODGLOS", "learn_set//podglos//", 25, 4)) 
     learned_speech_tab.append(VoiceCommand("NASTEPNY", "learn_set//nastepny//", 25, 5))
     learned_speech_tab.append(VoiceCommand("POPRZEDNI", "learn_set//poprzedni//", 20, 6))
-      
+       
     learned_speech_tab.append(VoiceCommand("WYCISZ", "learn_set//wycisz//", 20, 7))
     learned_speech_tab.append(VoiceCommand("JEDYNKA", "learn_set//jedynka//", 20, 8))
     learned_speech_tab.append(VoiceCommand("DWOJKA", "learn_set//dwojka//", 25, 9))
@@ -339,10 +348,10 @@ def goPrepareAndRecognition():
         learned_speech_tab[i].learned_ceps_abs = meanLearnedCeps(learned_speech_tab[i].learned_ceps, learned_speech_tab[i].numOfSpeech )
 
    
-    if(MODE == 1): # tryb z rozpoznawaniem komend
+    if(MODE == 1 or MODE ==2): # tryb z rozpoznawaniem komend
             while True:
                  goRecognition()
-    elif(MODE == 2): # tryb do testowania
+    elif(MODE == 8): # tryb do testowania
             goTest()    
  
 
@@ -350,9 +359,10 @@ def goPrepareAndRecognition():
 if __name__ == '__main__':
     print ("STARTING!\n")
     print ("Menu")
-    print ("1: Wlasciwe rozpoznawanie komend")
-    print ("2: Test systemu ze wszystkimi nagraniami")
-    print ("3: Przliczenie i zapisanie wspolczynnikow MFCC do plikow txt")
+    print ("1: Wlasciwe rozpoznawanie komend z wysylaniem na port szeregowy")
+    print ("2: Wlasciwe rozpoznawanie komend bez wysylania na port szeregowy")
+    print ("8: Test systemu ze wszystkimi nagraniami")
+    print ("9: Przeliczenie i zapisanie wspolczynnikow MFCC do plikow txt")
     
     nb = input('Wybierz opcje:\n')
     global MODE
@@ -364,12 +374,12 @@ if __name__ == '__main__':
     print( "Wybrano : {0}\n".format( MODE ) )
     
     
-    if(MODE == 1):
+    if(MODE == 1 or MODE == 2):
         threading.Thread(goPrepareAndRecognition()).start()
-    elif(MODE == 2):
+    elif(MODE == 8):
         goPrepareAndRecognition()  
-    elif(MODE == 3): # to samo co wyzej tylko bez zapetlania funkcji w while
-        goPrepareAndRecognition()
+    elif(MODE == 9): 
+        goPrepareAndRecognition() # to samo co wyzej tylko bez zapetlania funkcji w while
         
 
 
