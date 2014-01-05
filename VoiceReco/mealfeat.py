@@ -102,6 +102,7 @@ class MelFeatures:
       return wts
   
   def dct(self,Q,numcep):
+      ''' transformata cosinusowa '''
       #(the output of) this routine is essentially identical to MATLAB's
       S = Q.shape
       cos_arg = np.arange(1,2*S[0],2)
@@ -117,6 +118,7 @@ class MelFeatures:
       return C
 
   def idct(self,Q,numlen):
+    ''' odwrotna transformata cosinusowa '''
     S = Q.shape
     if numlen > S[0]:
       newQ = np.zeros((numlen,S[1]))
@@ -143,6 +145,7 @@ class MelFeatures:
       return C
   
   def deltas(self,c,w):
+      ''' pochodne wspolczynnikow MFCC '''
       S = c.shape
       d = np.zeros((S[0],S[1]))
       for n in range(0,S[1]):
@@ -151,25 +154,19 @@ class MelFeatures:
       return d
 
   def loadWAVfile(self, filename):
+      ''' ladowanie z pliku wav'''
       w  = scipy.io.wavfile.read(filename)
       self.x  = w[1]
       self.fs = w[0]
       return self.x
     
-  def calcMelFeatures(self, data):
+  def calcMelMatrixFeatures(self, data):
+      ''' funkcja oblicza i zwraca macierz wspolczynnikow MFCC '''
       x = self.preemph(data,self.a)
       
 #       fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y  = RecordModule.detectSingleWord(range(len(x)), x)
 #       x = word_y
       self.fs = 44100.0
- 
-#       pylab.plot(range(len(x)) , x)
-#       pylab.xlabel("x")
-#       pylab.ylabel("y")
-#       pylab.show()
-#        
-#        
-      
       
       outTuple = self.stft(x,self.t1,self.t2,self.fs)
       
@@ -209,7 +206,7 @@ class MelFeatures:
       lpBand = 0
       C_out2 = [[0 for x in range(self.numcepsBands)] for y in range(self.numallceps)] 
 
-      if(False):
+      if(False): #srednia z przedzialu
         for i in range(self.numallceps):
             lpBand = 0
             for j in range(len(C_out.T)):
@@ -220,7 +217,7 @@ class MelFeatures:
                     if(lpBand<self.numcepsBands-1):
                         lpBand+=1
 
-      if(True):
+      if(True): #amplituda z przedzialu
           for kk in range(self.numallceps):
             for ll in range(self.numcepsBands) :
                amplMax = max(C_out[kk][ll*sizeBand:ll*sizeBand+sizeBand])
@@ -233,6 +230,7 @@ class MelFeatures:
       return C_out2
   
   def calcMelVectFeatures(self, data):
+      ''' zwraca tylko zsumowany erktor cech MFCC '''
       vect_of_mccf = np.zeros(len(data))
 #       print(data.shape)
 #       for i in range(len(data)): 
@@ -254,9 +252,10 @@ class MelFeatures:
   
     
   def plotSpectrogram(self, data, title):
-          plt.title(title)
-          plt.imshow(data, origin='lower')
-          plt.show()
+    '''rysowanie widma wspolczynnikow MFCC '''
+    plt.title(title)
+    plt.imshow(data, origin='lower')
+    plt.show()
     
   def setNumFilts(self, num):
       self.numFilts = num
@@ -274,7 +273,7 @@ if __name__ == "__main__":
           
         rawdata = MelFeat.loadWAVfile(filename)
          
-        MFCC    = MelFeat.calcMelFeatures(rawdata)
+        MFCC    = MelFeat.calcMelMatrixFeatures(rawdata)
 #         MFCC_s  = MelFeat.calcMelVectFeatures(MFCC)
           
       

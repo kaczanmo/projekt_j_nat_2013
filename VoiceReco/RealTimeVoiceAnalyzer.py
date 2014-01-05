@@ -108,7 +108,7 @@ def getCepsMatrixFromData(t,y):
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
     ##################
     MelFeat = mealfeat.MelFeatures()
-    ceps_matrix    = MelFeat.calcMelFeatures(word_y)
+    ceps_matrix    = MelFeat.calcMelMatrixFeatures(word_y)
 
     return ceps_matrix
 
@@ -116,7 +116,7 @@ def getCepsMatrixFromData(t,y):
     
 def readTrainSpeeches(path, numOfSpeech):
     '''
-    funkcja do wcytania nagranych probek komend z plikow wav
+    funkcja do wczytania nagranych probek komend z plikow wav
     wazne jest ze wczytuje ona kolejno probki np jak podamy parametr 'numOfSpeech'=10 
     to musza istniec probki o nazwie 1.wav do 10.wav
     '''

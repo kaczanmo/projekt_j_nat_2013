@@ -7,7 +7,7 @@ Created on 24-11-2013
 
 class VoiceCommand(object):
     '''
-    VoiceCommand
+    VoiceCommand przechowuje informacje o komendzie, jej nagranych probkach i wspolcznnikach MFCC
     '''
     name = ''
     folderPath = '' 

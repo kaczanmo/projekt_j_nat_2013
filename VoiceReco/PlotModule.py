@@ -4,47 +4,41 @@ Created on 23-10-2013
 @author: Tenac
 '''
 
-
-import scipy
-import scipy.fftpack
 import pylab
-from scipy import pi
-import wave
-import numpy as np
-from numpy import sin, linspace, pi
-from pylab import plot, show, title, xlabel, ylabel, subplot
+from numpy import linspace
+from pylab import plot, xlabel, ylabel
 from scipy import fft, arange
-from pylab import plot, show, title, xlabel, ylabel, subplot, savefig
-from scipy import fft, arange, ifft
-from numpy import sin, linspace, pi
-from scipy.io.wavfile import read,write
+from scipy.io.wavfile import read
 import numpy
 import RecordModule
 
 
 def plotSpectrum(y,Fs):
- """
- Plots a Single-Sided Amplitude Spectrum of y(t)
- """
- maxFreq = 5000
- n = len(y) # length of the signal
- k = arange(n)
- T = n/Fs
- frq = k/T # two sides frequency range
+    """
+    Rysuje wykres czestotliwosciowy jednostronny y(t)
+    """
+    maxFreq = 5000
+    n = len(y) # length of the signal
+    k = arange(n)
+    T = n/Fs
+    frq = k/T # two sides frequency range
 
-#  frq = frq[0:n/2] # one side frequency range
- frq = frq[0:(maxFreq)]
- print(frq.shape)
- Y = fft(y)/n # fft computing and normalization
-#  Y = Y[0:n/2]
- Y = Y[0:(maxFreq)]
- 
- plot(frq,abs(Y),'r') # plotting the spectrum
- xlabel('Freq (Hz)')
- ylabel('|Y(freq)|')
+    #  frq = frq[0:n/2] # one side frequency range
+    frq = frq[0:(maxFreq)]
+    print(frq.shape)
+    Y = fft(y)/n # fft computing and normalization
+    #  Y = Y[0:n/2]
+    Y = Y[0:(maxFreq)]
+    
+    plot(frq,abs(Y),'r') # plotting the spectrum
+    xlabel('Freq (Hz)')
+    ylabel('|Y(freq)|')
 
 
 def readWav(filename, Fs):
+ '''
+ funkcja czyta plik dzwiekowy
+ '''
  rate,data=read(filename)
  y = numpy.atleast_2d(data)[0]
  lungime=len(y)

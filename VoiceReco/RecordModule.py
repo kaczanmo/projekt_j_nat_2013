@@ -33,11 +33,11 @@ CHANNELS = 1
 TRIM_APPEND = RATE / 4
 
 def is_silent(data_chunk):
-    """Returns 'True' if below the 'silent' threshold"""
+    """zwraca TRUE jest probka ramka dzwieku przekroczy prog ciszy"""
     return max(data_chunk) < THRESHOLD
 
 def normalize(data_all):
-    """Amplify the volume out to max -1dB"""
+    """Normalizacja glosnosci dzwieku do max -1dB"""
     # MAXIMUM = 16384
     normalize_factor = (float(NORMALIZE_MINUS_ONE_dB * FRAME_MAX_VALUE)
                         / max(abs(i) for i in data_all))
@@ -49,6 +49,7 @@ def normalize(data_all):
 
 
 def trim(data_all):
+    ''' przyciecie sygnalu dzwiekowego - wyciecie ciszy  z przodu i z tylu pliku '''
     _from = 0
     _to = len(data_all) - 1
     for i, b in enumerate(data_all):
@@ -64,8 +65,8 @@ def trim(data_all):
     return copy.deepcopy(data_all[int(_from):int(_to + 1)])
 
 def record():
-    """Record a word or words from the microphone and 
-    return the data as an array of signed shorts."""
+    """funkcja nagrywa dzwiek z mikrofinu i zwraca
+    jako tablice"""
 
     p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, output=True, frames_per_buffer=CHUNK_SIZE)
@@ -134,7 +135,7 @@ def record_to_file(path):
     wave_file.close()
     
 def getSpeechFromMic():
-    "Records from the microphone and outputs the resulting data "
+    "nagrywanie dzwieku z mikrofonu "
     sample_width, data = record()
     
 #     data = pack('<' + ('h' * len(data)), *data)
@@ -146,15 +147,22 @@ def getSpeechFromMic():
    
     
 def arithmeticMean(iterable):
+    ''' srednia arytmetyczna '''
     return sum(iterable)/float(len(iterable))
  
 def sampleStandardDeviation(iterable):
+    '''
+    odchylenie std
+    '''
     l=len(iterable)
     x2=[x**2 for x in iterable]
     return math.sqrt(float(l)/(l-1)*(arithmeticMean(x2)-arithmeticMean(iterable)**2))
 
     
 def detectSingleWord(t,y):
+    '''
+    alg detekcji pojedynczego slowa (komendy) slowa
+    '''
     framelen = 10 # frame length in ms
     framesamples = int(RATE/1000*framelen)
     frames = int(len(y) / framesamples)
@@ -163,8 +171,6 @@ def detectSingleWord(t,y):
     
     for i in range(frames):
         wordspower[i] = (sum(abs( y[i*framesamples+1:(i+1)*framesamples])**2 ) )
-       
-
        
     fr = range(frames)
 
