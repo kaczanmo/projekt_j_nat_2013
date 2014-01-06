@@ -16,7 +16,7 @@ import math
 
 from mealfeat import MelFeatures
 import PlotModule
-from scipy.signal.signaltools import lfilter
+from scipy.signal import lfilter
 
 
 
@@ -294,18 +294,28 @@ def detectSingleWord(t,y):
 #     print('ITL:',ITL, 'ITU:',ITU)      
     return fr, wordspower, wordszeros, wordsdetect, ITL, ITU,  word_fr, word_y
     
-def preemp(input, p=0.97):
+def preemp(input, p=0.95):
     """Pre-emphasis filter."""
-    return lfilter([1., -p], 1, input)   
+#     return lfilter([1., -p], 1, input) 
+#     return numpy.append(input[0],input[1:]-p*input[:-1])
+    y2 = input
+    y2[0]=0
+    for i in range(1,len(input)-1,1):
+        y2[i]=input[i]-(p*y2[i-1])
+           
+#     return lfilter(numpy.array([1,-p]),1,input)
+    return y2
     
 if __name__ == '__main__':
     print("please speak a word into the microphone")
-    filename = "learn_set//podglos//"+str( 9 )+".wav"   
-#     filename = 'test.wav' 
+#     filename = "learn_set//podglos//"+str( 4 )+".wav"   
+    filename = 'test.wav' 
 #     record_to_file(filename)
 #     print("done - result written to ", filename)
-    t,y = PlotModule.readWav(filename, RATE)
+#     t,y = PlotModule.readWav(filename, RATE)
     
+    t,y = getSpeechFromMic()
+    print("done")
     
 #     t,y = getSpeechFromMic()
     y = preemp(y)
@@ -341,9 +351,9 @@ if __name__ == '__main__':
     
     
 #     ceps = MfccModule.getCepsVect(word_y)
-    MelFeat = MelFeatures()
-    rawdata = MelFeat.loadWAVfile(filename)
-    MFCC    = MelFeat.calcMelMatrixFeatures(word_y)          
+#     MelFeat = MelFeatures()
+#     rawdata = MelFeat.loadWAVfile(filename)
+#     MFCC    = MelFeat.calcMelMatrixFeatures(word_y)          
       
 #     MelFeat.plotSpectrogram(MFCC)
         

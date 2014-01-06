@@ -26,22 +26,23 @@ BOUDR = 9600
 
 
 
-
-
-
-    
-def SendCommandToSerialPort(commandText):
+def ConnectToSerialPort(port=PORT):
+    global ser
     ser = serial.Serial(PORT, BOUDR)
     time.sleep(2)
     
+def DisconnectSerialPort():
+    time.sleep(1)
+    ser.close()   
+
+    
+def SendCommandToSerialPort(commandText):
     for i in (range(len(commandText))): 
         ser.write(commandText[i].encode())
 
-
     ser.write(b'\r')
 
-    time.sleep(1)
-    ser.close()
+
     
 if __name__ == '__main__':    
     SendCommandToSerialPort('ok')

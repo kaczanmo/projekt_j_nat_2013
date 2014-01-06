@@ -11,8 +11,10 @@ import mealfeat
 import numpy
 import math
 from mealfeat import MelFeatures
+from Rs232Com import SendCommandToSerialPort, ConnectToSerialPort, DisconnectSerialPort
 from VoiceCommand import VoiceCommand
-from Rs232Com import SendCommandToSerialPort
+
+
 
 '''
 Created on 23-10-2013
@@ -20,7 +22,7 @@ Created on 23-10-2013
 @author: Tenac
 '''
 
-prog_Komenda_nieznana = 71.0 # %ponizej tego progu komenda zostaje zakwalifikowana jako nierozpoznana
+prog_Komenda_nieznana = 50.0 # %ponizej tego progu komenda zostaje zakwalifikowana jako nierozpoznana
 #/////////////////////////////////////
 
 
@@ -268,6 +270,7 @@ def goRecognition():
     print("please speak a word into the microphone")
     t, y = RecordModule.getSpeechFromMic()
     print("done")
+    print("dl probki :",len(y))
 #     t,y = PlotModule.readWav("learn_set//wylacz//9.wav", 44100.0)
     predict =  getCepsMatrixFromData(t, y)
     predClass = getClasificationDecision(predict)
@@ -353,7 +356,8 @@ def goPrepareAndRecognition():
                  goRecognition()
     elif(MODE == 8): # tryb do testowania
             goTest()    
- 
+    
+    print('done')
 
 
 if __name__ == '__main__':
@@ -374,7 +378,11 @@ if __name__ == '__main__':
     print( "Wybrano : {0}\n".format( MODE ) )
     
     
-    if(MODE == 1 or MODE == 2):
+    if(MODE == 1 ):
+        ConnectToSerialPort('COM1')
+        threading.Thread(goPrepareAndRecognition()).start()
+        DisconnectSerialPort()
+    elif MODE == 2:
         threading.Thread(goPrepareAndRecognition()).start()
     elif(MODE == 8):
         goPrepareAndRecognition()  

@@ -31,8 +31,15 @@ class MelFeatures:
     pass
 
   def preemph(self,x,a):
-      y = lfilter(np.array([1,-a]),1,x)
-      return y
+#       y = lfilter(np.array([1,-a]),1,x)
+#       return y
+    y2 = x
+    y2[0]=0
+    for i in range(1,len(x)-1,1):
+        y2[i]=x[i]-(a*y2[i-1])
+           
+#     return lfilter(numpy.array([1,-p]),1,input)
+    return y2
   
   def hz2mel(self,frq):
       m   = 2595*math.log(1+frq/700,10)
@@ -220,6 +227,7 @@ class MelFeatures:
       if(True): #amplituda z przedzialu
           for kk in range(self.numallceps):
             for ll in range(self.numcepsBands) :
+#                print('len',sizeBand,'ff',ll*sizeBand,ll*sizeBand+sizeBand) 
                amplMax = max(C_out[kk][ll*sizeBand:ll*sizeBand+sizeBand])
                amplMin = min(C_out[kk][ll*sizeBand:ll*sizeBand+sizeBand])
                if amplMax > abs(amplMin) :
