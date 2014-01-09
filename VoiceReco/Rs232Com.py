@@ -6,18 +6,6 @@ Created on 05-01-2014
 @author: Tenac
 '''
 
-
-import serial
-import time
-
-# port=serial.Serial('COM1', 9600)
-# time.sleep(1)
-# # port.open
-# time.sleep(1)
-# # port.readline()
-# port.write('data\r')
-# time.sleep(1)
-
 import serial
 import time
 import array
@@ -29,7 +17,7 @@ BOUDR = 9600
 def ConnectToSerialPort(port=PORT):
     global ser
     ser = serial.Serial(PORT, BOUDR)
-    time.sleep(2)
+    time.sleep(2) # po otwarciu portu trzeba poczekac
     
 def DisconnectSerialPort():
     time.sleep(1)
@@ -46,6 +34,36 @@ def SendCommandToSerialPort(commandText):
     
 if __name__ == '__main__':    
     SendCommandToSerialPort('ok')
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
     
 #     print (ser.readline())
 #     print (ser.readline())

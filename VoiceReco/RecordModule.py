@@ -17,6 +17,8 @@ import math
 from mealfeat import MelFeatures
 import PlotModule
 from scipy.signal import lfilter
+import scipy
+import sigproc
 
 
 
@@ -292,23 +294,14 @@ def detectSingleWord(t,y):
     word_y = word_y[wordstart*(framesamples) : wordstop*(framesamples)]
         
 #     print('ITL:',ITL, 'ITU:',ITU)      
+#     print('fr0:',word_fr[0], 'fr last:',word_fr[len(word_fr)-1])     
     return fr, wordspower, wordszeros, wordsdetect, ITL, ITU,  word_fr, word_y
     
-def preemp(input, p=0.95):
-    """Pre-emphasis filter."""
-#     return lfilter([1., -p], 1, input) 
-#     return numpy.append(input[0],input[1:]-p*input[:-1])
-    y2 = input
-    y2[0]=0
-    for i in range(1,len(input)-1,1):
-        y2[i]=input[i]-(p*y2[i-1])
-           
-#     return lfilter(numpy.array([1,-p]),1,input)
-    return y2
+
     
 if __name__ == '__main__':
     print("please speak a word into the microphone")
-#     filename = "learn_set//podglos//"+str( 4 )+".wav"   
+#     filename = "learn_set//wlacz//"+str( 12 )+".wav"   
     filename = 'test.wav' 
 #     record_to_file(filename)
 #     print("done - result written to ", filename)
@@ -318,34 +311,42 @@ if __name__ == '__main__':
     print("done")
     
 #     t,y = getSpeechFromMic()
-    y = preemp(y)
+    y = sigproc.preemp(y,0.97)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = detectSingleWord(t,y)
      
  
     pylab.subplot(611)
     pylab.title(filename) 
     pylab.plot(t, y, 'b')
-     
+
     pylab.subplot(612)
+    pylab.title('sygnal mocy komendy ') 
     pylab.plot(fr, (wordspower), 'r')
  
+     
     arrITL = array('f', range(len(wordspower)) )
     for i in range(len(wordspower)):
         arrITL[i] = ITL
     pylab.plot(fr, arrITL, 'g')
-     
+      
     arrITU = array('f', range(len(wordspower)) )
     for i in range(len(wordspower)):
         arrITU[i] = ITU
     pylab.plot(fr, arrITU, 'r')
+
      
     pylab.subplot(613)
-    pylab.plot(fr, wordszeros, 'r')
+    pylab.title('sygnal ilosci przejsc przez zero komendy "wlacz"') 
+    pylab.plot(fr, wordszeros, 'b')
+
      
     pylab.subplot(614)
     pylab.plot(t, (wordsdetect ), 'g')
      
     pylab.subplot(615)
+    pylab.title('sygnal wykrytej komendy z otrzymanego sygnalu') 
+    pylab.xlabel("t[s]")
+    pylab.ylabel("amplituda")
     pylab.plot(word_fr, (word_y ), 'r')
     
     

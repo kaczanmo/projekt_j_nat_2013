@@ -13,6 +13,7 @@ import math
 from mealfeat import MelFeatures
 from Rs232Com import SendCommandToSerialPort, ConnectToSerialPort, DisconnectSerialPort
 from VoiceCommand import VoiceCommand
+import sigproc
 
 
 
@@ -22,7 +23,7 @@ Created on 23-10-2013
 @author: Tenac
 '''
 
-prog_Komenda_nieznana = 50.0 # %ponizej tego progu komenda zostaje zakwalifikowana jako nierozpoznana
+prog_Komenda_nieznana = 49.0 # %ponizej tego progu komenda zostaje zakwalifikowana jako nierozpoznana
 #/////////////////////////////////////
 
 
@@ -107,7 +108,7 @@ def getCepsMatrixFromData(t,y):
     y: sygnal podany jako tablica wartosci
     '''
     ##########
-    y = RecordModule.preemp(y)
+    y = sigproc.preemp(y)
     fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y = RecordModule.detectSingleWord(t,y)
     ##################
     MelFeat = mealfeat.MelFeatures()

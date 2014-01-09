@@ -6,3 +6,4 @@ PROGRAM
 
 
 DOKUMENTACJA
++ screeny wykresów

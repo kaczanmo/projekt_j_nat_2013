@@ -6,6 +6,7 @@ from scipy.fftpack import fft
 from scipy.signal import lfilter
 import pylab
 from array import array
+import sigproc
 
 class MelFeatures:
   """Mel-frequency cepstral coefficients
@@ -29,17 +30,6 @@ class MelFeatures:
 
   def __init__(self):
     pass
-
-  def preemph(self,x,a):
-#       y = lfilter(np.array([1,-a]),1,x)
-#       return y
-    y2 = x
-    y2[0]=0
-    for i in range(1,len(x)-1,1):
-        y2[i]=x[i]-(a*y2[i-1])
-           
-#     return lfilter(numpy.array([1,-p]),1,input)
-    return y2
   
   def hz2mel(self,frq):
       m   = 2595*math.log(1+frq/700,10)
@@ -169,7 +159,7 @@ class MelFeatures:
     
   def calcMelMatrixFeatures(self, data):
       ''' funkcja oblicza i zwraca macierz wspolczynnikow MFCC '''
-      x = self.preemph(data,self.a)
+      x = sigproc.preemp(data, self.a)#self.preemph(data,self.a)
       
 #       fr, wordspower, wordszeros, wordsdetect, ITL ,ITU,  word_fr, word_y  = RecordModule.detectSingleWord(range(len(x)), x)
 #       x = word_y
